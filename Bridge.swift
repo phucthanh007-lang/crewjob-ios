@@ -5,6 +5,7 @@ import CryptoKit
 import FirebaseCore
 import FirebaseMessaging
 import GoogleSignIn
+import UserNotifications
 
 /// Cầu nối giữa trang web và iOS. Cùng giao thức với bản Android:
 ///   window.__gsCb({idToken}|{appleIdToken,nonce}|{cancelled:true}|{err})   và   window.__pushCb(token)
@@ -22,6 +23,7 @@ final class Bridge: NSObject, WKScriptMessageHandler {
       window.CrewAuth={available:function(){return true},apple:true,
         signIn:function(){p('auth',{kind:'google'})},signInApple:function(){p('auth',{kind:'apple'})}};
       window.CrewPush={request:function(){p('push',{})}};
+      window.CrewNative={docs:function(a){p('docs',{items:a})}};
     })();
     """
 
@@ -30,6 +32,7 @@ final class Bridge: NSObject, WKScriptMessageHandler {
         switch m.name {
         case "auth": kind == "apple" ? signInApple() : signInGoogle()
         case "push": requestPush()
+        case "docs": scheduleDocs((m.body as? [String: Any])?["items"] as? [[String: Any]] ?? [])
         default: break
         }
     }
@@ -82,6 +85,38 @@ final class Bridge: NSObject, WKScriptMessageHandler {
     }
     private static func sha256(_ s: String) -> String {
         SHA256.hash(data: Data(s.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    // MARK: - Nhac het han giay to (thong bao cuc bo, chay ngay tren may, khong can mang)
+    private func scheduleDocs(_ items: [[String: Any]]) {
+        let c = UNUserNotificationCenter.current()
+        c.getNotificationSettings { s in
+            guard s.authorizationStatus == .authorized || s.authorizationStatus == .provisional else { return }
+            c.getPendingNotificationRequests { pending in
+                let old = pending.map { $0.identifier }.filter { $0.hasPrefix("doc-") }
+                c.removePendingNotificationRequests(withIdentifiers: old)
+                let fmt = DateFormatter()
+                fmt.dateFormat = "yyyy-MM-dd"
+                fmt.locale = Locale(identifier: "en_US_POSIX")
+                let cal = Calendar.current
+                for it in items.prefix(20) {
+                    guard let id = it["id"] as? String, let name = it["name"] as? String,
+                          let ds = it["expiry"] as? String, let exp = fmt.date(from: ds) else { continue }
+                    for d in [90, 30, 7] {
+                        guard let day = cal.date(byAdding: .day, value: -d, to: exp) else { continue }
+                        var comp = cal.dateComponents([.year, .month, .day], from: day)
+                        comp.hour = 9
+                        guard let fire = cal.date(from: comp), fire > Date() else { continue }
+                        let content = UNMutableNotificationContent()
+                        content.title = "Giấy tờ sắp hết hạn"
+                        content.body = "\(name) còn \(d) ngày là hết hạn (\(ds))."
+                        content.sound = .default
+                        let trig = UNCalendarNotificationTrigger(dateMatching: comp, repeats: false)
+                        c.add(UNNotificationRequest(identifier: "doc-\(id)-\(d)", content: content, trigger: trig))
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - Push

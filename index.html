@@ -1434,6 +1434,7 @@ function render(){
  else body=state.role==='co'?(state.chat?chatView():state.coJob?appsView():coView()):adView();
  $('#app').innerHTML=header()+'<main class="wrap main">'+banner()+body+'</main>'+(state.role==='sea'?navBar():'');
  window.scrollTo(0,y);
+ try{if(window.CrewNative)window.CrewNative.docs(state.docs.filter(x=>x.expiry).map(x=>({id:String(x.id),name:(CERT[x.key]||{}).short||String(x.key),expiry:x.expiry})))}catch(e){}
  saveState();
 }
 
