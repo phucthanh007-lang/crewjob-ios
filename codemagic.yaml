@@ -31,6 +31,15 @@ workflows:
           app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --platform IOS --create --certificate-key @file:/tmp/cert_key
           keychain add-certificates
           xcode-project use-profiles
+      - name: Chan doan loi bien dich
+        ignore_failure: true
+        script: |
+          xcodebuild -project CrewJob.xcodeproj -scheme CrewJob -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/diag.xcarchive archive DEVELOPMENT_TEAM=3KX5TXN6SX CODE_SIGN_STYLE=Manual "CODE_SIGN_IDENTITY=Apple Distribution" > /tmp/diag.log 2>&1
+          echo "EXIT=$?"
+          echo "===== LOI ====="
+          grep -E "error:|error " /tmp/diag.log | sort -u | head -40
+          echo "===== CUOI LOG ====="
+          tail -25 /tmp/diag.log
       - name: Dong goi
         script: |
           xcode-project build-ipa --project CrewJob.xcodeproj --scheme CrewJob
