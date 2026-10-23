@@ -19,8 +19,6 @@ targets:
     dependencies:
       - package: Firebase
         product: FirebaseMessaging
-      - package: Firebase
-        product: FirebaseCore
       - package: GoogleSignIn
         product: GoogleSignIn
     settings:
