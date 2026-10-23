@@ -24,38 +24,23 @@ workflows:
           NEXT=$((BUILD + 1))
           sed -i '' "s/CURRENT_PROJECT_VERSION: \"[0-9]*\"/CURRENT_PROJECT_VERSION: \"$NEXT\"/" project.yml
           xcodegen generate
-      - name: Tao chung chi va ho so ky
+      - name: Dong goi va ky bang Apple Cloud Signing
         script: |
-          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/cert_key -q -N ""
-          keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --platform IOS --create --certificate-key @file:/tmp/cert_key
-          keychain add-certificates
-          PROFILE=$(ls -t ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision | head -1)
-          security cms -D -i "$PROFILE" > /tmp/p.plist
-          PNAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' /tmp/p.plist)
-          echo "PROFILE NAME: $PNAME"
-          echo "PROFILE ENTITLEMENTS:"
-          /usr/libexec/PlistBuddy -c 'Print :Entitlements' /tmp/p.plist
-          security find-identity -v -p codesigning
-          printf '        CODE_SIGN_STYLE: Manual\n        CODE_SIGN_IDENTITY: "Apple Distribution"\n        PROVISIONING_PROFILE_SPECIFIER: "%s"\n' "$PNAME" >> project.yml
-          xcodegen generate
+          set -o pipefail
+          printf '%s' "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/asc.p8
+          mkdir -p build/ios/ipa
           cat > /tmp/export.plist <<EOT
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0"><dict>
           <key>method</key><string>app-store-connect</string>
           <key>teamID</key><string>3KX5TXN6SX</string>
-          <key>signingStyle</key><string>manual</string>
-          <key>signingCertificate</key><string>Apple Distribution</string>
-          <key>provisioningProfiles</key><dict><key>com.crewjob.app</key><string>$PNAME</string></dict>
+          <key>signingStyle</key><string>automatic</string>
+          <key>destination</key><string>export</string>
           </dict></plist>
           EOT
-      - name: Dong goi
-        script: |
-          set -o pipefail
-          mkdir -p build/ios/ipa
-          xcodebuild -project CrewJob.xcodeproj -scheme CrewJob -configuration Release -destination 'generic/platform=iOS' -archivePath build/CrewJob.xcarchive archive > /tmp/archive.log 2>&1 || { echo "ARCHIVE FAILED"; grep -E "error:" /tmp/archive.log | sort -u | head -30; tail -15 /tmp/archive.log; exit 1; }
-          xcodebuild -exportArchive -archivePath build/CrewJob.xcarchive -exportPath build/ios/ipa -exportOptionsPlist /tmp/export.plist > /tmp/export.log 2>&1 || { echo "EXPORT FAILED"; grep -E "error:" /tmp/export.log | sort -u | head -30; tail -15 /tmp/export.log; exit 1; }
+          xcodebuild -project CrewJob.xcodeproj -scheme CrewJob -configuration Release -destination 'generic/platform=iOS' -archivePath build/CrewJob.xcarchive archive -allowProvisioningUpdates -authenticationKeyPath /tmp/asc.p8 -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" > /tmp/archive.log 2>&1 || { echo "ARCHIVE FAILED"; grep -E "error:" /tmp/archive.log | sort -u | head -30; tail -15 /tmp/archive.log; exit 1; }
+          xcodebuild -exportArchive -archivePath build/CrewJob.xcarchive -exportPath build/ios/ipa -exportOptionsPlist /tmp/export.plist -allowProvisioningUpdates -authenticationKeyPath /tmp/asc.p8 -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" > /tmp/export.log 2>&1 || { echo "EXPORT FAILED"; grep -E "error:" /tmp/export.log | sort -u | head -30; tail -15 /tmp/export.log; exit 1; }
           ls -la build/ios/ipa
     artifacts:
       - build/ios/ipa/*.ipa
