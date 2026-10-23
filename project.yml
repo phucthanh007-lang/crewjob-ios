@@ -1,0 +1,36 @@
+name: CrewJob
+options:
+  bundleIdPrefix: com.crewjob
+  deploymentTarget:
+    iOS: "15.0"
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 10.29.0
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 7.1.0
+targets:
+  CrewJob:
+    type: application
+    platform: iOS
+    sources:
+      - path: CrewJob
+    dependencies:
+      - package: Firebase
+        product: FirebaseMessaging
+      - package: Firebase
+        product: FirebaseCore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.crewjob.app
+        MARKETING_VERSION: "0.35"
+        CURRENT_PROJECT_VERSION: "35"
+        DEVELOPMENT_TEAM: "3KX5TXN6SX"
+        CODE_SIGN_ENTITLEMENTS: CrewJob/CrewJob.entitlements
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: CrewJob/Info.plist

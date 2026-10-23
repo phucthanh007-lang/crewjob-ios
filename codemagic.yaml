@@ -1,0 +1,38 @@
+workflows:
+  ios-testflight:
+    name: CrewJob iOS -> TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 40
+    integrations:
+      app_store_connect: Codemagic
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.crewjob.app
+      vars:
+        APP_STORE_APPLE_ID: "6826008527"
+      xcode: latest
+    scripts:
+      - name: Sap xep thu muc, cai XcodeGen va tao du an
+        script: |
+          mkdir -p CrewJob/Resources
+          mv App.swift Bridge.swift WebContainer.swift Info.plist GoogleService-Info.plist CrewJob.entitlements CrewJob/
+          mv index.html CrewJob/Resources/
+          brew install xcodegen
+          xcodegen generate
+      - name: Tang so build
+        script: |
+          BUILD=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" || echo 0)
+          NEXT=$((BUILD + 1))
+          sed -i '' "s/CURRENT_PROJECT_VERSION: \"[0-9]*\"/CURRENT_PROJECT_VERSION: \"$NEXT\"/" project.yml
+          xcodegen generate
+      - name: Dong goi
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa --project CrewJob.xcodeproj --scheme CrewJob
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
