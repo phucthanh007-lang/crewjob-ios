@@ -1,0 +1,1645 @@
+<meta charset="utf-8">
+<title>CrewJob</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout concept: one phone-width column like a bridge logbook. Chart-paper ground, navy ink, lifebuoy-orange accent; rank epaulettes carry the identity. */
+:root{
+  --bg:#E8EDF0; --surface:#F6F8F9; --surface-2:#EDF1F3; --ink:#0C2233; --ink-2:#4A6070; --line:#CBD5DB;
+  --accent:#D9481F; --accent-fg:#FFFFFF;
+  --brand:#0B3F6B; --hero-a:#0B3F6B; --hero-b:#1470B8; --hero-ink:#FFFFFF;
+  --head-bg:#0C2233; --head-fg:#EAF1F5; --head-line:#2B4A5F;
+  --ok:#16784E; --warn:#A8620A; --soon:#245FA6; --bad:#B8322A;
+  --gold:#D6A92B; --epa-deck:#143B57; --epa-eng:#4B3075;
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#09161E; --surface:#0F2230; --surface-2:#142B3B; --ink:#E4EDF2; --ink-2:#8EA5B3; --line:#223E4E;
+  --accent:#FF7F55; --accent-fg:#1B0A03;
+  --brand:#8FC2F2; --hero-a:#0A2B4A; --hero-b:#0F4C85; --hero-ink:#FFFFFF;
+  --head-bg:#061019; --head-fg:#E4EDF2; --head-line:#1F3A4A;
+  --ok:#4CC38A; --warn:#E5A84B; --soon:#6FA8E8; --bad:#F07A70;
+  --epa-deck:#0B2A3F; --epa-eng:#3A2660; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#09161E; --surface:#0F2230; --surface-2:#142B3B; --ink:#E4EDF2; --ink-2:#8EA5B3; --line:#223E4E;
+  --accent:#FF7F55; --accent-fg:#1B0A03;
+  --brand:#8FC2F2; --hero-a:#0A2B4A; --hero-b:#0F4C85; --hero-ink:#FFFFFF;
+  --head-bg:#061019; --head-fg:#E4EDF2; --head-line:#1F3A4A;
+  --ok:#4CC38A; --warn:#E5A84B; --soon:#6FA8E8; --bad:#F07A70;
+  --epa-deck:#0B2A3F; --epa-eng:#3A2660; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+h1,h2,h3,p{margin:0}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:780px;margin:0 auto;padding-inline:16px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.disp{font-family:var(--f-display);letter-spacing:.01em}
+
+/* header */
+.top{background:var(--surface);color:var(--ink);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.top-in{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding-block:10px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:26px;letter-spacing:.03em;text-transform:uppercase;color:var(--brand)}
+.brand svg{width:24px;height:24px;color:var(--accent)}
+.roles{display:flex;border:1px solid var(--head-line);border-radius:6px;overflow:hidden;min-width:0}
+.roles button{background:transparent;border:0;color:var(--head-fg);padding:6px 12px;font-size:13px;opacity:.75;white-space:nowrap}
+.roles button+button{border-left:1px solid var(--head-line)}
+.roles button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);opacity:1;font-weight:600}
+.main{padding-block:16px 96px;display:flex;flex-direction:column;gap:16px}
+
+/* banner */
+.demo{font-size:12.5px;color:var(--ink-2);border:1px dashed var(--line);border-radius:6px;padding:8px 12px;background:var(--surface-2)}
+
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:5;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav-in{max-width:780px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.nav button{position:relative;background:transparent;border:0;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;color:var(--ink-2)}
+.nav button svg{width:22px;height:22px}
+.nav button[aria-current="page"]{color:var(--brand);font-weight:700}
+
+/* generic */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.sec-title{font-family:var(--f-display);font-size:22px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.sub{color:var(--ink-2);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+.btn{background:var(--ink);color:var(--surface);border:1px solid var(--ink);border-radius:6px;padding:8px 14px;font-weight:600;font-size:14px}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.danger{background:transparent;color:var(--bad);border-color:var(--bad)}
+.pill{--c:var(--ink-2);display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:2px 10px;font-size:12.5px;font-weight:600;white-space:nowrap;color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--c) 30%,var(--surface))}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+.pill.ok{--c:var(--ok)} .pill.warn{--c:var(--warn)} .pill.soon{--c:var(--soon)} .pill.bad{--c:var(--bad)} .pill.plain::before{display:none}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs button{background:transparent;border:0;border-bottom:3px solid transparent;padding:8px 12px;font-weight:500;color:var(--ink-2);white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.badge{display:inline-block;min-width:18px;padding:0 6px;border-radius:9px;background:var(--accent);color:var(--accent-fg);font-size:11.5px;font-weight:700;margin-left:4px;text-align:center}
+
+/* filters */
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.chip{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 11px;font-family:var(--f-display);font-weight:600;font-size:17px;letter-spacing:.03em}
+.chip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.filters2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.filters2 .wide{grid-column:1/-1}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.field label,.lbl{font-size:12px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
+select,input[type=text],input[type=search],input[type=number],input[type=date],textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+textarea{resize:vertical;min-height:120px;line-height:1.4}
+
+/* epaulette */
+.epa{width:30px;height:44px;border-radius:3px;background:var(--epa-deck);display:flex;flex-direction:column;justify-content:center;gap:3px;padding:0 4px;flex:none}
+.epa.eng{background:var(--epa-eng)}
+.epa i{display:block;height:4px;background:var(--gold)}
+.epa.rating i{height:2px;opacity:.8}
+
+/* job */
+.jobs{display:flex;flex-direction:column;gap:10px}
+.job{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.job-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;padding:12px 14px;width:100%;text-align:left;background:transparent;border:0}
+.job-rank{font-family:var(--f-display);font-weight:700;font-size:26px;line-height:1;text-transform:uppercase}
+.job-rank small{font-family:var(--f-body);font-weight:500;font-size:13px;color:var(--ink-2);margin-left:6px;text-transform:none}
+.job-meta{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:5px;font-size:13px;color:var(--ink-2)}
+.job-meta b{color:var(--ink);font-weight:500}
+.sal{font-family:var(--f-display);font-weight:700;font-size:24px;line-height:1;text-align:right;white-space:nowrap}
+.sal small{display:block;font-family:var(--f-body);font-weight:400;font-size:11.5px;color:var(--ink-2);margin-top:3px}
+.lockt{font-family:var(--f-body);font-size:13px;font-weight:600;color:var(--accent)}
+.job-foot{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:0 14px 12px}
+.verified{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--ink-2)}
+.verified svg{width:14px;height:14px;color:var(--ok)}
+.detail{border-top:1px solid var(--line);padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:var(--surface-2)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin:0;font-size:13.5px}
+.facts dt{font-size:10.5px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
+.facts dd{margin:1px 0 0}
+.req{display:flex;flex-direction:column;gap:6px;list-style:none;margin:0;padding:0}
+.req li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;justify-content:space-between;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.locked-note{border:1px dashed var(--accent);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.contact{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.contact span{font-family:var(--f-mono);font-size:15px;user-select:all}
+
+/* docs */
+.sumbar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--line)}
+.sumbar span{display:block;height:100%}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.legend div{display:flex;flex-direction:column}
+.legend .n{font-family:var(--f-display);font-size:30px;font-weight:700;line-height:1}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.docs{display:flex;flex-direction:column;gap:10px}
+.doc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.doc h3{font-size:16px;font-weight:600}
+.doc-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px 14px;margin:0}
+.doc-meta dt{font-size:11.5px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
+.doc-meta dd{margin:1px 0 0}
+.photo{max-width:100%;border-radius:8px;border:1px solid var(--line);display:block}
+.thumb{width:56px;height:40px;object-fit:cover;border-radius:5px;border:1px solid var(--line)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.form .full{grid-column:1/-1}
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 12px}
+.checks label{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.checks input{margin-top:3px;accent-color:var(--accent)}
+
+/* price */
+.quote{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px}
+.quote .price{font-family:var(--f-display);font-weight:700;font-size:24px;text-align:right;white-space:nowrap}
+.quote .full{grid-column:1/-1}
+
+/* me */
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.plan>div{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.plan>div.cur{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.plan ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;display:flex;flex-direction:column;gap:2px}
+.price-big{font-family:var(--f-display);font-weight:700;font-size:32px;line-height:1}
+.push{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface-2);font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
+.push svg{width:20px;height:20px;color:var(--accent);flex:none;margin-top:1px}
+.switch{display:flex;gap:8px;align-items:center}
+.switch input{accent-color:var(--accent);width:18px;height:18px}
+
+.prof{margin:0;display:flex;flex-direction:column}
+.prof>div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:13px 2px;border-bottom:1px solid var(--line)}
+.prof>div:last-child{border-bottom:0}
+.prof dt{color:var(--ink-2);min-width:0}
+.prof dd{margin:0;font-weight:700;text-align:right;min-width:0;overflow-wrap:anywhere}
+.btn.full{width:100%;padding:13px 14px;font-size:15px;border-radius:10px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.thumbwrap{position:relative;display:inline-block}
+.thumbwrap .thumb{width:84px;height:62px;display:block}
+.thumbwrap .x{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:15px;line-height:1;padding:0}
+.chg{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:5px 12px;font-size:13px}
+.welcome{padding-block:40px 28px;display:flex;flex-direction:column;gap:16px}
+.welcome .brand{font-size:36px}
+.welcome .brand svg{width:34px;height:34px}
+.tag{margin:-8px 0 8px;color:var(--ink-2)}
+.choose{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.choice{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.choice:hover{border-color:var(--accent)}
+.choice .ic{width:46px;height:46px;border-radius:50%;background:var(--head-bg);color:var(--accent);display:grid;place-items:center}
+.choice .ic svg{width:24px;height:24px}
+.choice .ct{font-family:var(--f-display);font-weight:700;font-size:28px;text-transform:uppercase;letter-spacing:.02em;line-height:1.05}
+.choice .cd{color:var(--ink-2);font-size:14.5px}
+.choice .go{color:var(--accent);font-weight:600;margin-top:4px}
+.lnk{align-self:flex-start;background:transparent;border:0;color:var(--ink-2);text-decoration:underline;padding:4px 0;font-size:13px}
+.more{border-top:1px dashed var(--line);padding-top:10px}
+.more summary{cursor:pointer;color:var(--accent);font-weight:600}
+.tagline{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.greet{font-family:var(--f-display);font-weight:700;font-size:32px;line-height:1.1;letter-spacing:.01em}
+.hero{background:linear-gradient(135deg,var(--hero-a),var(--hero-b));color:var(--hero-ink);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.hero-l{opacity:.85;font-size:14px}
+.hero-t{font-family:var(--f-display);font-weight:700;font-size:30px;line-height:1.05;text-transform:uppercase;letter-spacing:.02em}
+.hero-r{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:17px}
+.hero-r b{font-family:var(--f-display);font-size:26px}
+.prog{height:10px;border-radius:6px;background:rgba(255,255,255,.28);overflow:hidden;margin-top:6px}
+.prog i{display:block;height:100%;background:#5FD6A0;border-radius:6px}
+.hero-n{font-size:13.5px;opacity:.9}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.stat .n{font-family:var(--f-display);font-weight:700;font-size:38px;line-height:1}
+.stat .l{color:var(--ink-2)}
+.sech{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:4px}
+.sech h2{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+.sech h2 svg{width:20px;height:20px;color:var(--warn)}
+.sech button{background:transparent;border:0;color:var(--brand);font-weight:700;padding:4px 0}
+.att{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c,var(--line));border-radius:14px;padding:12px 14px}
+.att .ai{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,var(--surface));color:var(--c)}
+.att .ai svg{width:24px;height:24px}
+.att b{display:block;font-size:16px}
+.att.bad{--c:var(--bad)} .att.warn{--c:var(--warn)} .att.soon{--c:var(--soon)} .att.ok{--c:var(--ok)}
+.mjob{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.mj-b{display:flex;flex-direction:column;min-width:0}
+.pick{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.pickrow{display:flex;align-items:center;gap:12px;background:transparent;border:0;border-bottom:1px solid var(--line);padding:13px 14px;text-align:left;width:100%}
+.pickrow:last-child{border-bottom:0}
+.pickrow .pi{width:38px;height:38px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;color:var(--brand);flex:none}
+.pickrow .pi svg{width:22px;height:22px}
+.pickrow .pn{flex:1;min-width:0;font-weight:500}
+.pickrow .chev{color:var(--ink-2);font-size:22px}
+label.btn{display:flex;align-items:center;justify-content:center;gap:10px;position:relative;cursor:pointer;text-align:center}
+label.btn svg{width:22px;height:22px}
+label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.filein{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:24px 16px;text-align:center;color:var(--ink-2)}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:8px;font-size:14px;z-index:20;max-width:calc(100vw - 32px);box-shadow:0 4px 18px rgba(0,0,0,.25)}
+@media (prefers-reduced-motion:no-preference){.job,.doc,.quote{transition:border-color .15s}}
+@media (max-width:420px){.sal{font-size:20px}.job-rank{font-size:23px}.brand{font-size:22px}}
+.drow{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c,var(--ok));border-radius:12px;overflow:hidden;--c:var(--ok)}
+.drow.bad{--c:var(--bad)}.drow.warn{--c:var(--warn)}.drow.soon{--c:var(--soon)}
+.drow-top{width:100%;text-align:left;display:flex;gap:12px;align-items:center;padding:12px 14px;background:transparent;border:0;color:var(--ink)}
+.drow-top input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.drow .dt{flex:1;min-width:0}.drow .dt b{display:block;font-size:15.5px;line-height:1.25}.drow .dt span{display:block;font-size:13px;color:var(--ink-2)}
+.dd{flex:none;text-align:right;font-size:13px;font-weight:600;color:var(--c);max-width:38%}
+.drow-more{border-top:1px solid var(--line);padding:12px 14px;background:var(--surface-2);display:flex;flex-direction:column;gap:10px}
+.thumbs{display:flex;gap:8px;overflow-x:auto}.thumbs img{height:84px;border-radius:6px;border:1px solid var(--line)}.thumbs.big img{height:140px}
+.dprice{font-weight:600;color:var(--ink)!important;margin-top:2px}
+.dgrp{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);margin-top:4px}
+.clip{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.bsel{display:inline-flex;gap:8px;align-items:center;font-size:14px;font-weight:600}
+.bsel input{width:20px;height:20px;accent-color:var(--accent)}
+a.btn{display:inline-block;text-decoration:none;text-align:center}
+.nbadge{position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--accent);color:var(--accent-fg);font-size:11px;font-weight:700;font-style:normal;display:flex;align-items:center;justify-content:center}
+.cand{width:100%;text-align:left;display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;color:var(--ink)}
+.cand .cm{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.cand .sub.msg{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cand .cr{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.msgs{display:flex;flex-direction:column;gap:8px}
+.bub{max-width:82%;padding:8px 12px;border-radius:14px 14px 14px 4px;background:var(--surface-2);border:1px solid var(--line);align-self:flex-start;white-space:pre-wrap;overflow-wrap:anywhere}
+.bub.me{align-self:flex-end;border-radius:14px 14px 4px 14px;background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.bub small{display:block;font-size:11px;opacity:.7;margin-top:3px}
+.msgform{display:flex;gap:8px;align-items:center}
+.msgform input{flex:1}
+.jref{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.notice{border:1px solid var(--accent);border-radius:10px;padding:12px;background:color-mix(in srgb,var(--accent) 8%,var(--surface));display:flex;flex-direction:column;gap:8px;text-align:left;color:var(--ink);width:100%}
+.notice svg{width:18px;height:18px;vertical-align:-3px;color:var(--accent)}
+.quick{display:flex;flex-direction:column;gap:10px}
+.qp{display:flex;gap:8px;flex-wrap:wrap}
+.qp input{flex:1;min-width:200px}
+select:disabled{opacity:.55}
+.legalchk{display:flex;gap:10px;align-items:flex-start;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface)}
+.legalchk input{margin-top:3px;width:18px;height:18px;accent-color:var(--accent);flex:none}
+.linkb{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;font:inherit;cursor:pointer}
+.legal{display:flex;flex-direction:column;gap:10px;line-height:1.55}
+.legal h2{font-size:18px;margin-top:10px}
+.legal p,.legal li{font-size:14.5px;color:var(--ink)}
+.legal ul,.legal ol{padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.rpt{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface-2);display:flex;flex-direction:column;gap:8px}
+.safe{font-size:13px;color:var(--ink-2);border-left:3px solid var(--accent);padding:4px 10px}
+</style>
+
+<div id="app"></div>
+<div id="toast" role="status" hidden></div>
+
+<script>
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+const iso=x=>{const t=new Date(x);return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')};
+const addDays=(n,base)=>{const t=new Date(base||TODAY);t.setDate(t.getDate()+n);return t};
+const parseD=s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2])};
+const isoToday=iso(TODAY);
+const diffDays=(a,b)=>Math.round((parseD(a)-parseD(b))/864e5);
+const D=n=>iso(addDays(n));
+const fmtDate=s=>parseD(s).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+const usd=n=>new Intl.NumberFormat('en-US').format(n);
+const vnd=n=>new Intl.NumberFormat('vi-VN').format(n)+' ₫';
+let toastT;
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},2800)}
+
+
+/* ---------- legal / safety ---------- */
+const OP={name:'Công ty TNHH Leen Techco (LEEN TECHCO COMPANY LIMITED)',addr:'1 Phan Bá Phiên, phường Thọ Quang, Đà Nẵng, Việt Nam',email:'phucthanh007@gmail.com',zalo:'0349 714 721'};
+const LEGAL={
+privacy:{title:'Chính sách bảo mật',html:
+'<p class="sub">Cập nhật lần cuối: 13/10/2026. Áp dụng cho ứng dụng CrewJob (Android).</p>'+
+'<h2>1. Ai vận hành ứng dụng</h2><p>Ứng dụng CrewJob do '+OP.name+', địa chỉ '+OP.addr+', vận hành (sau đây gọi là “chúng tôi”). Liên hệ về dữ liệu cá nhân: '+OP.email+' hoặc Zalo '+OP.zalo+'. Chúng tôi là nền tảng kết nối, không phải cơ quan nhà nước.</p>'+
+'<h2>2. Dữ liệu chúng tôi thu thập</h2><ul>'+
+'<li><b>Lưu trên điện thoại của bạn:</b> hồ sơ cá nhân (họ tên, chức danh, loại tàu, kinh nghiệm, mức lương mong muốn, ngày có thể nhận tàu) và thông tin giấy tờ bạn tự thêm (loại giấy tờ, số giấy tờ, ngày cấp, ngày hết hạn: hộ chiếu, sổ thuyền viên, bằng cấp, chứng chỉ, giấy khám sức khỏe, visa...). Số hộ chiếu và số sổ thuyền viên là dữ liệu nhạy cảm; chúng không được gửi lên máy chủ của chúng tôi.</li>'+
+'<li><b>Ảnh giấy tờ không được lưu.</b> Khi bạn quét ảnh, ứng dụng đọc chữ ngay trên điện thoại (Google ML Kit, mô hình nằm sẵn trong app) để điền số và ngày, rồi bỏ ảnh. Ảnh không được gửi tới máy chủ nào. Thư viện ML Kit có thể gửi cho Google dữ liệu chẩn đoán không chứa ảnh hay nội dung giấy tờ (đời máy, phiên bản hệ điều hành, phiên bản app, mã lỗi, số liệu hiệu năng).</li>'+
+'<li><b>Lưu trên máy chủ (Google Firebase) khi bạn đăng nhập:</b> mã người dùng và địa chỉ email của tài khoản Google bạn dùng để đăng nhập; mã thiết bị để gửi thông báo; cài đặt thông báo tin phù hợp (chức danh, mức lương tối thiểu, thời gian nhập tàu mong muốn); báo cáo vi phạm bạn gửi.</li>'+
+'<li><b>Với tài khoản công ty:</b> tên công ty, địa chỉ, số điện thoại, người liên hệ và các tin tuyển dụng đã đăng. Nhà tuyển dụng tự quyết định thông tin liên hệ công khai trong tin.</li>'+
+'<li><b>Tin tuyển dụng thu thập từ nguồn công khai</b> (nhóm, trang cộng đồng) được hiển thị kèm tên nguồn; có thể gồm thông tin liên hệ công khai của người đăng tin. Chủ tin có thể yêu cầu gỡ (xem Điều khoản).</li>'+
+'<li>Ứng dụng chỉ mở camera hoặc thư viện ảnh khi bạn chủ động bấm quét giấy tờ. Ứng dụng không đọc danh bạ, vị trí hay tin nhắn SMS, không có quảng cáo và không theo dõi bạn qua ứng dụng khác.</li></ul>'+
+'<h2>3. Mục đích sử dụng</h2><ul><li>Nhắc ngày hết hạn giấy tờ và hiển thị giá gia hạn tham khảo.</li><li>Ghép tin tuyển dụng theo chức danh, mức lương, thời gian nhập tàu và gửi thông báo tin phù hợp.</li><li>Cho phép nhà tuyển dụng đăng tin và bạn xem tin, liên hệ nhà tuyển dụng.</li><li>Kiểm duyệt nội dung, chống gian lận và spam, trả lời yêu cầu của bạn.</li></ul><p>Chúng tôi không bán dữ liệu cá nhân và không dùng dữ liệu để quảng cáo của bên thứ ba.</p>'+
+'<h2>4. Chia sẻ dữ liệu</h2><ul><li>Danh sách giấy tờ và ngày hết hạn chỉ hiện với nhà tuyển dụng khi bạn bật mục “Cho nhà tuyển dụng xem danh sách giấy tờ” hoặc đồng ý lúc gửi hồ sơ. Số giấy tờ và ảnh không bao giờ được chia sẻ với nhà tuyển dụng. Bạn tắt được bất cứ lúc nào trong Hồ sơ, mục Quyền riêng tư.</li><li>Khi bạn bấm “Nhắn Zalo để gia hạn”, nội dung yêu cầu được gửi qua Zalo theo chính sách của Zalo.</li><li>Đăng nhập, cơ sở dữ liệu và thông báo đẩy do Google (Firebase, Google Sign-In, Firebase Cloud Messaging) cung cấp, theo chính sách của Google. Chúng tôi dùng Anthropic API để đọc và phân loại tin tuyển dụng công khai; dữ liệu cá nhân của người dùng ứng dụng không được gửi cho dịch vụ này.</li><li>Dữ liệu có thể được chuyển cho cơ quan nhà nước có thẩm quyền khi pháp luật yêu cầu.</li></ul>'+
+'<h2>5. Lưu trữ và bảo mật</h2><p>Dữ liệu trên máy chủ nằm trong hạ tầng Google Cloud (Firebase), truyền qua kết nối mã hóa HTTPS và được phân quyền truy cập. Không có biện pháp nào an toàn tuyệt đối; nếu xảy ra sự cố lộ lọt dữ liệu chúng tôi sẽ thông báo cho bạn và cơ quan có thẩm quyền theo quy định.</p>'+
+'<h2>6. Thời gian lưu giữ</h2><p>Chúng tôi giữ dữ liệu trên máy chủ trong thời gian tài khoản còn hoạt động. Khi bạn xóa tài khoản, dữ liệu tài khoản của bạn trên máy chủ bị xóa; dữ liệu lưu trên điện thoại bị xóa khi bạn xóa tài khoản trong app hoặc gỡ ứng dụng. Bản sao lưu được xóa theo chu kỳ không quá 30 ngày. Chúng tôi chỉ giữ lại tối đa 12 tháng nhật ký báo cáo vi phạm, gian lận để bảo vệ người dùng khác và đáp ứng yêu cầu pháp luật. Tin tuyển dụng tự động ẩn sau 10 ngày.</p>'+
+'<h2>7. Quyền của bạn</h2><ul><li>Xem và sửa thông tin trong ứng dụng.</li><li>Rút lại sự đồng ý chia sẻ giấy tờ trong Hồ sơ, mục Quyền riêng tư.</li><li>Xóa tài khoản và dữ liệu ngay trong ứng dụng (Hồ sơ, mục Quyền riêng tư), hoặc yêu cầu qua email '+OP.email+'. Chúng tôi xử lý trong thời gian sớm nhất và không quá 30 ngày.</li><li>Khiếu nại, hỏi về dữ liệu: liên hệ như mục 1.</li></ul>'+
+'<h2>8. Độ tuổi</h2><p>Ứng dụng dành cho người từ đủ 18 tuổi. Chúng tôi không cố ý thu thập dữ liệu của người dưới 18 tuổi.</p>'+
+'<h2>9. Thay đổi chính sách</h2><p>Khi có thay đổi quan trọng, chúng tôi thông báo trong ứng dụng trước khi áp dụng.</p>'},
+terms:{title:'Điều khoản sử dụng',html:
+'<p class="sub">Cập nhật lần cuối: 13/10/2026.</p>'+
+'<h2>1. Về dịch vụ</h2><p>CrewJob do '+OP.name+' vận hành. CrewJob là công cụ giúp thuyền viên quản lý giấy tờ, xem tin tuyển dụng và nhắn tin với nhà tuyển dụng. CrewJob không phải cơ quan nhà nước, không phải đơn vị tuyển dụng hay cấp giấy tờ, và không bảo đảm bạn có việc làm.</p>'+
+'<h2>2. Tài khoản</h2><p>Bạn từ đủ 18 tuổi, cung cấp thông tin trung thực và tự chịu trách nhiệm về giấy tờ bạn tải lên. Không dùng giấy tờ của người khác.</p>'+
+'<h2>3. Tin tuyển dụng và nhà tuyển dụng</h2><ul><li>Nhà tuyển dụng chịu trách nhiệm về tính chính xác và hợp pháp của tin đăng.</li><li>Nhà tuyển dụng không được yêu cầu thuyền viên đặt cọc hoặc đóng phí để được giới thiệu việc làm. Việc này trái thông lệ quốc tế (Công ước MLC 2006) và quy định pháp luật. Nếu gặp, hãy báo cáo ngay và không chuyển tiền.</li><li>Một số tin được tập hợp từ nguồn công khai và ghi rõ nguồn. Nếu bạn là chủ tin và muốn gỡ, bấm “Báo cáo tin” chọn “Tôi là chủ nội dung” hoặc liên hệ '+OP.email+'. Chúng tôi sẽ gỡ nhanh.</li></ul>'+
+'<h2>4. Nội dung bị cấm</h2><p>Không đăng hoặc gửi nội dung lừa đảo, giả mạo, thu phí trái phép, quấy rối, thù ghét, khiêu dâm, bất hợp pháp, spam hoặc quảng cáo không liên quan. Chúng tôi có thể lọc, gỡ nội dung và khóa tài khoản vi phạm.</p>'+
+'<h2>5. Báo cáo và chặn</h2><p>Bạn có thể báo cáo tin tuyển dụng hoặc cuộc trò chuyện, và chặn người dùng ngay trong ứng dụng. Chúng tôi xem xét báo cáo và phản hồi trong thời gian sớm nhất, thường trong 24 đến 72 giờ.</p>'+
+'<h2>6. Giá gia hạn giấy tờ</h2><p>Giá gia hạn chỉ để tham khảo, do đơn vị dịch vụ quyết định và có thể thay đổi. Đó không phải lệ phí nhà nước. Thông tin quy định về giấy tờ chỉ mang tính tham khảo, hãy đối chiếu văn bản chính thức hoặc cơ quan có thẩm quyền.</p>'+
+'<h2>7. Gói trả phí</h2><p>Hiện toàn bộ tính năng miễn phí. Khi có gói trả phí, giá và quyền lợi được nêu rõ trước khi bạn thanh toán, việc thanh toán và hủy gia hạn thực hiện qua cửa hàng ứng dụng.</p>'+
+'<h2>8. Giới hạn trách nhiệm</h2><p>Ứng dụng được cung cấp “như hiện có”. Trong phạm vi pháp luật cho phép, chúng tôi không chịu trách nhiệm về thiệt hại phát sinh từ giao dịch giữa bạn và nhà tuyển dụng hoặc đơn vị dịch vụ.</p>'+
+'<h2>9. Luật áp dụng và liên hệ</h2><p>Điều khoản này theo pháp luật Việt Nam. Liên hệ: '+OP.email+', Zalo '+OP.zalo+'.</p>'},
+delete:{title:'Xóa tài khoản và dữ liệu',html:
+'<p class="sub">Áp dụng cho ứng dụng CrewJob.</p>'+
+'<h2>Cách 1: xóa ngay trong ứng dụng</h2><ol><li>Mở ứng dụng, vào mục <b>Hồ sơ</b> (tài khoản công ty: vào <b>Thông tin công ty</b>).</li><li>Kéo xuống mục <b>Quyền riêng tư</b>.</li><li>Bấm <b>Xóa tài khoản và dữ liệu</b>, rồi bấm lần nữa để xác nhận.</li></ol>'+
+'<h2>Cách 2: gửi yêu cầu khi không còn ứng dụng</h2><p>Gửi email tới '+OP.email+' (hoặc nhắn Zalo '+OP.zalo+') với tiêu đề “Xóa tài khoản CrewJob”, ghi họ tên và email tài khoản Google đã đăng nhập. Chúng tôi xác minh và xóa trong thời gian không quá 30 ngày.</p>'+
+'<h2>Dữ liệu bị xóa</h2><ul><li>Hồ sơ và thông tin giấy tờ (số, ngày cấp, ngày hết hạn). Ứng dụng không lưu ảnh giấy tờ.</li><li>Tin nhắn và hồ sơ đã gửi cho nhà tuyển dụng.</li><li>Với tài khoản công ty: thông tin công ty, tin đăng và danh sách ứng viên.</li></ul>'+
+'<h2>Dữ liệu có thể được giữ lại</h2><p>Nhật ký báo cáo vi phạm và gian lận được giữ tối đa 12 tháng để bảo vệ người dùng khác và đáp ứng yêu cầu pháp luật. Bản sao lưu được xóa theo chu kỳ không quá 30 ngày.</p>'}
+};
+const OBJ_RE=/(^|[^\p{L}])(đm|địt|đụ|cặc|lồn|vcl|vkl|đéo|fuck|shit|gái gọi|sex|ma túy|ma tuý|cần sa|cá độ|cờ bạc)(?![\p{L}])/iu;
+const SCAM_RE=/(đặt cọc|tiền cọc|phí hồ sơ|phí xuất cảnh|phí môi giới|phí dịch vụ|chuyển khoản trước|nộp tiền trước|đóng phí|thu phí|bao đậu|chạy việc|lót tay|nộp phí|đóng tiền)/iu;
+const objText=t=>OBJ_RE.test(String(t||''));
+const scamText=t=>SCAM_RE.test(String(t||'').replace(/(không|ko|miễn|chẳng|cấm|đừng)\s+(thu\s+|nhận\s+|yêu cầu\s+)?(phí|đặt cọc|tiền cọc)[^.,;\n]*/giu,''));
+const RP_REASONS=[['scam','Nghi lừa đảo hoặc thu phí, đặt cọc'],['wrong','Thông tin sai hoặc gây hiểu nhầm'],['filled','Tin đã tuyển xong hoặc hết hạn'],['abuse','Nội dung phản cảm hoặc quấy rối'],['owner','Tôi là chủ tin, đề nghị gỡ tin']];
+const rpLabel=k=>(RP_REASONS.find(x=>x[0]===k)||[0,k])[1];
+const isBlockedCo=id=>state.blocked.indexOf('co:'+id)>=0;
+function legalView(){
+ const L=LEGAL[state.legal];
+ return'<main class="wrap main"><button class="btn ghost sm" data-a="closeLegal" style="align-self:flex-start">‹ Quay lại</button><h1 class="sec-title">'+esc(L.title)+'</h1><div class="legal">'+L.html+'</div></main>';
+}
+function legalLinks(){
+ return'<div class="row" style="gap:6px 14px"><button class="linkb" data-a="openLegal" data-v="privacy">Chính sách bảo mật</button><button class="linkb" data-a="openLegal" data-v="terms">Điều khoản sử dụng</button><button class="linkb" data-a="openLegal" data-v="delete">Xóa tài khoản</button></div>';
+}
+function privacyBlock(){
+ const sea=state.role==='sea';
+ let h='<section class="card stack"><h2 class="sec-title" style="font-size:19px">Quyền riêng tư và an toàn</h2>';
+ if(sea)h+='<label class="switch"><input type="checkbox" data-c="shareOn"'+(state.share?' checked':'')+'> Cho nhà tuyển dụng xem danh sách giấy tờ và hạn dùng của tôi</label><p class="sub">Mặc định tắt. Nhà tuyển dụng chỉ thấy tên giấy tờ và còn hạn hay không, không thấy số giấy tờ và không có ảnh. Bạn tắt được bất cứ lúc nào.</p>';
+ h+=legalLinks();
+ if(state.blocked.length)h+='<div class="stack"><div class="lbl">Đã chặn</div>'+state.blocked.map(k=>{const p=k.split(':');const nm=p[0]==='co'?co(p[1]).name:candInfo(p[1]).name;return'<div class="row between"><span>'+esc(nm)+'</span><button class="btn ghost sm" data-a="unblock" data-v="'+esc(k)+'">Bỏ chặn</button></div>'}).join('')+'</div>';
+ h+='<button class="btn '+(state.delConfirm?'danger':'ghost')+' full" data-a="delAccount">'+(state.delConfirm?'Bấm lần nữa để xóa vĩnh viễn':'Xóa tài khoản và toàn bộ dữ liệu')+'</button></section>';
+ return h;
+}
+function reportPanel(jid){
+ if(!state.report||state.report.jobId!==jid)return'';
+ return'<form class="rpt" data-f="report"><b>Báo cáo tin này</b><div class="field"><label for="rp-r">Lý do</label><select id="rp-r" name="reason">'+selOpts(RP_REASONS,'scam')+'</select></div><div class="field"><label for="rp-n">Ghi chú (không bắt buộc)</label><textarea id="rp-n" name="note" rows="2" maxlength="300"></textarea></div><div class="row"><button class="btn accent sm" type="submit">Gửi báo cáo</button><button class="btn ghost sm" type="button" data-a="reportClose">Hủy</button></div></form>';
+}
+function postGuard(v,raw){
+ const txt=[v.vessel,v.route,v.flag,v.dwt,v.contact,raw].join(' ');
+ if(objText(txt))return'Tin có nội dung không phù hợp, không thể đăng';
+ if(scamText(txt))return'Tin có nội dung thu phí hoặc đặt cọc, app không cho phép đăng';
+ return'';
+}
+
+/* ---------- reference data ---------- */
+const RANKS=[
+ {id:'MASTER',abbr:'Master',name:'Thuyền trưởng',n:4,kind:'deck'},
+ {id:'CO',abbr:'C/O',name:'Đại phó',n:3,kind:'deck'},
+ {id:'O2',abbr:'2/O',name:'Phó hai',n:2,kind:'deck'},
+ {id:'O3',abbr:'3/O',name:'Phó ba',n:1,kind:'deck'},
+ {id:'CE',abbr:'C/E',name:'Máy trưởng',n:4,kind:'eng'},
+ {id:'E2',abbr:'2/E',name:'Máy hai',n:3,kind:'eng'},
+ {id:'E3',abbr:'3/E',name:'Máy ba',n:2,kind:'eng'},
+ {id:'E4',abbr:'4/E',name:'Máy tư',n:1,kind:'eng'},
+ {id:'ETO',abbr:'ETO',name:'Sĩ quan điện',n:1,kind:'eng'},
+ {id:'BSN',abbr:'Bosun',name:'Thủy thủ trưởng',n:0,kind:'deck'},
+ {id:'AB',abbr:'AB',name:'Thủy thủ',n:0,kind:'deck'},
+ {id:'OS',abbr:'OS',name:'Thủy thủ phổ thông',n:0,kind:'deck'},
+ {id:'OIL',abbr:'Oiler',name:'Thợ máy',n:0,kind:'eng'},
+ {id:'FIT',abbr:'Fitter',name:'Thợ nguội',n:0,kind:'eng'},
+ {id:'COOK',abbr:'Cook',name:'Đầu bếp',n:0,kind:'deck'}
+];
+const rk=id=>RANKS.find(r=>r.id===id)||RANKS[0];
+const SHIPS=['Bulk carrier','Container','Oil tanker','Chemical tanker','Product tanker','LPG/LNG','General cargo'];
+const TRAIN5='Chứng chỉ huấn luyện có giá trị 5 năm kể từ ngày cấp (Thông tư 20/2023/TT-BGTVT, hiệu lực từ 01/9/2023).';
+const CERT={
+ PASSPORT:{name:'Passport (Hộ chiếu)',short:'Passport',g:'Giấy tờ cá nhân'},
+ SEAMANBOOK:{name:"Seaman's Book (Sổ thuyền viên)",short:"Seaman's Book",g:'Giấy tờ cá nhân',noExpiry:true,noRenew:true,valid:'Sổ thuyền viên không có ngày hết hạn.'},
+ COC:{name:'Certificate of Competency – COC (Giấy chứng nhận khả năng chuyên môn)',short:'COC',g:'Bằng cấp',valid:'Giấy chứng nhận khả năng chuyên môn có giá trị 5 năm kể từ ngày cấp (Thông tư 20/2023/TT-BGTVT).'},
+ GMDSS:{name:"GMDSS General Operator's Certificate – GOC (Chứng chỉ vận hành viên GMDSS)",short:'GMDSS GOC',g:'Bằng cấp'},
+ BST:{name:'Basic Safety Training – BST (Huấn luyện an toàn cơ bản)',short:'BST',g:'Chứng chỉ huấn luyện',valid:TRAIN5+' Từ 2023, nội dung nhận thức an ninh tàu biển nằm trong khóa cơ bản.'},
+ PSCRB:{name:'Proficiency in Survival Craft and Rescue Boats – PSCRB (Xuồng cứu sinh và xuồng cứu nạn)',short:'PSCRB',g:'Chứng chỉ huấn luyện',valid:TRAIN5},
+ AFF:{name:'Advanced Fire Fighting – AFF (Chữa cháy nâng cao)',short:'AFF',g:'Chứng chỉ huấn luyện',valid:TRAIN5},
+ MEFA:{name:'Medical First Aid – MEFA (Sơ cứu y tế)',short:'MEFA',g:'Chứng chỉ huấn luyện',valid:TRAIN5},
+ MECA:{name:'Medical Care – MECA (Chăm sóc y tế trên tàu)',short:'MECA',g:'Chứng chỉ huấn luyện',valid:TRAIN5},
+ SSO:{name:'Ship Security Officer – SSO (Sĩ quan an ninh tàu biển)',short:'SSO',g:'Chứng chỉ huấn luyện',valid:TRAIN5},
+ ECDIS:{name:'Electronic Chart Display and Information System – ECDIS (Hải đồ điện tử)',short:'ECDIS',g:'Chứng chỉ huấn luyện'},
+ RADAR:{name:'Radar Navigation and Radar Plotting (Radar)',short:'Radar',g:'Chứng chỉ huấn luyện',valid:TRAIN5+' Từ 01/9/2023 chia hai khóa: cấp vận hành cho sĩ quan boong, cấp quản lý cho Thuyền trưởng và Đại phó.'},
+ ARPA:{name:'Automatic Radar Plotting Aids – ARPA (Thiết bị dò tìm và xác định tọa độ mục tiêu tự động)',short:'ARPA',g:'Chứng chỉ huấn luyện',valid:TRAIN5+' ARPA là chứng chỉ riêng, tách khỏi Radar.'},
+ TANKER:{name:'Oil and Chemical Tanker Cargo Operations (Vận hành hàng tàu dầu và hóa chất)',short:'Oil/Chemical Tanker',g:'Chứng chỉ huấn luyện',valid:'Khóa đặc biệt tàu dầu và tàu hóa chất được gộp làm một từ 01/9/2023. '+TRAIN5},
+ GAS:{name:'Liquefied Gas Tanker Cargo Operations (Vận hành hàng tàu khí hóa lỏng)',short:'Gas Tanker',g:'Chứng chỉ huấn luyện',valid:TRAIN5},
+ BRM:{name:'Bridge Resource Management / Bridge Team Management – BRM/BTM (Quản lý nguồn lực buồng lái)',short:'BRM/BTM',g:'Chứng chỉ huấn luyện',valid:TRAIN5},
+ SDSD:{name:'Security Training for Seafarers with Designated Security Duties (An ninh cho thuyền viên có nhiệm vụ an ninh)',short:'Designated Security Duties',g:'Chứng chỉ huấn luyện',valid:TRAIN5},
+ VHB:{name:'Violence, Harassment and Bullying Awareness (Phòng chống bạo lực, quấy rối và bắt nạt)',short:'VHB Awareness',g:'Chứng chỉ huấn luyện',isNew:true,valid:'Khóa mới trong STCW sửa đổi 2024, hiệu lực từ 01/01/2026. Hỏi công ty hoặc cờ tàu về thời điểm áp dụng.'},
+ MEDICAL:{name:'Seafarer Medical Certificate (Giấy chứng nhận sức khỏe thuyền viên)',short:'Medical',g:'Sức khỏe',noRenew:true,noNum:true,valid:'Thường có giá trị 18 tháng kể từ ngày ký (12 tháng nếu có bệnh trong danh mục và chủ tàu đề nghị). Theo Thông tư 22/2017/TT-BYT, sửa đổi bởi Thông tư 17/2018/TT-BYT.'},
+ YF:{name:'Yellow Fever Vaccination Certificate (Giấy chứng nhận tiêm vắc xin sốt vàng)',short:'Yellow Fever',g:'Sức khỏe',noRenew:true,noNum:true,years:10,valid:'Hiệu lực 10 năm. Trên giấy có hai ngày: ngày thứ nhất là ngày cấp, ngày thứ hai là ngày hết hạn. Nếu bỏ trống ngày hết hạn, app tự tính ngày cấp cộng 10 năm.'},
+ CHOLERA:{name:'Cholera Vaccination Certificate (Giấy chứng nhận tiêm vắc xin dịch tả)',short:'Cholera',g:'Sức khỏe',noRenew:true,noNum:true,years:1,valid:'Hiệu lực 1 năm kể từ ngày tiêm. Nếu bỏ trống ngày hết hạn, app tự tính ngày cấp cộng 1 năm.'},
+ DWK:{name:'Deck Watchkeeping Certificate (Chứng chỉ trực ca boong)',short:'Deck Watchkeeping',g:'Chứng chỉ huấn luyện',noExpiry:true,noRenew:true,valid:'Chứng chỉ trực ca boong không có ngày hết hạn.'},
+ VISA_US:{name:'United States Visa C1/D (Thị thực Mỹ C1/D)',short:'US Visa C1/D',g:'Visa'},
+ OTHER:{name:'Other Certificate (Giấy tờ khác)',short:'Other',g:'Khác'}
+};
+const COC_CAP=[['MASTER','Master (Thuyền trưởng)','deck',3],['CO','Chief Officer (Đại phó)','deck',2],['OOW','Officer in Charge of a Navigational Watch (Sĩ quan boong trực ca)','deck',1],['CE','Chief Engineer (Máy trưởng)','eng',3],['E2','Second Engineer (Máy hai)','eng',2],['EOOW','Officer in Charge of an Engineering Watch (Sĩ quan máy trực ca)','eng',1],['ETO','Electro-Technical Officer (Sĩ quan kỹ thuật điện)','eto',1]];
+const RANK_CAP={MASTER:'MASTER',CO:'CO',O2:'OOW',O3:'OOW',CE:'CE',E2:'E2',E3:'EOOW',E4:'EOOW',ETO:'ETO'};
+const capInfo=id=>COC_CAP.find(c=>c[0]===id);
+function cocFits(docCap,rankId){const need=RANK_CAP[rankId];if(!need)return true;const a=capInfo(docCap),b=capInfo(need);if(!a||!b)return false;return a[2]===b[2]&&a[3]>=b[3]}
+const BASE_ALL=['PASSPORT','SEAMANBOOK','MEDICAL','BST'];
+const DECK_OFF=['COC','GMDSS','PSCRB','AFF','MEFA','ECDIS','RADAR','ARPA'];
+const RANK_CERTS={MASTER:DECK_OFF.concat(['MECA']),CO:DECK_OFF.concat(['MECA']),O2:DECK_OFF,O3:DECK_OFF,CE:['COC','PSCRB','AFF','MEFA','MECA'],E2:['COC','PSCRB','AFF','MEFA'],E3:['COC','PSCRB','AFF','MEFA'],E4:['COC','PSCRB','AFF','MEFA'],ETO:['COC','AFF','MEFA'],BSN:['PSCRB','DWK'],AB:['PSCRB','DWK'],OS:[],OIL:[],FIT:[],COOK:[]};
+function certsFor(rankId,ship){
+ const L=BASE_ALL.concat(RANK_CERTS[rankId]||[]);
+ if(/tanker/i.test(ship||'')&&rankId!=='COOK')L.push('TANKER');
+ if(ship==='LPG/LNG'&&rankId!=='COOK')L.push('GAS');
+ const order=Object.keys(CERT);
+ return Array.from(new Set(L)).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+}
+
+/* LAUNCH_FREE = true: mọi tính năng miễn phí. Đổi thành false khi đủ người dùng để khóa tính năng Pro. */
+const LAUNCH_FREE=true;
+/* ---------- sample state ---------- */
+const doc=(id,key,expiry,extra)=>Object.assign({id,key,expiry:expiry==null?null:D(expiry),number:''},extra||{});
+const CO=[
+ {id:'me',name:'',city:'',address:'',person:'',contact:'',status:'approved'},
+ {id:'cx',name:'Tin thu thập từ cộng đồng',city:'Facebook / Zalo',address:'',person:'',contact:'',status:'approved'}
+];
+const MIN=60000;
+const CANDS=[];
+const J=(id,rank,ship,dwt,flag,route,joinIn,port,months,smin,smax,certs,cid,hrs,extra)=>Object.assign({id,rank,shipType:ship,dwt,flag,route,joinDate:D(joinIn),months,salaryMin:smin,salaryMax:smax,certs:certsFor(rank,ship),companyId:cid,postedHrs:hrs,vessel:'',source:'company',status:'approved',owner:'foreign',cur:'USD'},extra||{});
+const state={
+ role:null,coPrefill:null,tab:'jobs',pro:true,legalOK:false,share:false,blocked:[],blockArm:null,reports:[],stats:null,report:null,legal:null,pendingApply:null,delConfirm:false,
+ me:{name:'Thuyền viên',rank:'CO',ship:'Bulk carrier',years:0,salMin:0,salMax:0,avail:D(30)},editProfile:false,
+ alert:{on:true,rank:'CO',minSalary:0,within:90},
+ filters:{q:'',rank:'CO',ship:'ALL',owner:'ALL',minSalary:0,within:'ALL',sort:'new'},
+ expanded:null,applied:new Set(),chat:null,coJob:null,qp:null,
+ apps:[],
+ threads:[],
+ addStep:null,bulk:null,delJob:null,docOpen:null,inbox:[],editInbox:null,newDoc:{key:null,expiry:'',number:'',issue:''},renewOpen:null,delArm:null,
+ coTab:'post',adTab:'posts',parsed:null,
+ docs:[],
+ jobs:[],
+ quotes:[]
+};
+const co=id=>CO.find(c=>c.id===id)||{name:'—',city:'',contact:''};
+
+/* ---------- logic ---------- */
+function docStatus(exp){
+ if(!exp)return{k:'ok',d:99999,label:'Không có ngày hết hạn'};
+ const d=diffDays(exp,isoToday);
+ if(d<0)return{k:'bad',d,label:'Quá hạn '+(-d)+' ngày'};
+ const lb=d<30?'Còn '+d+' ngày':'Còn '+(d/30.44).toFixed(1).replace('.',',')+' tháng';
+ if(d<=60)return{k:'warn',d,label:lb};
+ if(d<=180)return{k:'soon',d,label:lb};
+ return{k:'ok',d,label:lb};
+}
+const daysLeft=x=>x.expiry?diffDays(x.expiry,isoToday):99999;
+/* Tin không có ngày nhập tàu: vẫn hiện, tự ẩn sau 30 ngày kể từ lúc đăng */
+const jLive=j=>j.joinDate?diffDays(j.joinDate,isoToday)>=0:(j.postedHrs||0)<=720;
+const jIn=j=>j.joinDate?diffDays(j.joinDate,isoToday):null;
+const joinTxt=j=>j.joinDate?fmtDate(j.joinDate):'chưa rõ';
+function nextReminder(d){
+ if(d<0)return'Đã hết hạn';
+ if(d<=7)return'Nhắc hằng ngày';
+ const ms=[180,90,60,30,7].filter(m=>m<d);
+ if(!ms.length)return'—';
+ return'Còn '+ms[0]+' ngày (sau '+(d-ms[0])+' ngày nữa)';
+}
+function matchJob(j){
+ const jdt=j.joinDate||isoToday,endIso=iso(addDays((j.months||4)*30,parseD(jdt)));
+ return j.certs.map(k=>{
+  const t=CERT[k],dc=state.docs.find(x=>x.key===k);
+  if(!dc)return{k,name:t.short,st:'missing',txt:'Chưa có trong hồ sơ'};
+  if(k==='COC'&&!cocFits(dc.cap,j.rank)){const ci=capInfo(dc.cap);return{k,name:t.short,st:'bad',txt:'Bằng '+(ci?ci[1].split(' (')[0]:'chưa rõ chức danh')+', chưa đủ cho '+rk(j.rank).abbr}}
+  if(!dc.expiry)return{k,name:t.short,st:'ok',txt:'Không có ngày hết hạn'};
+  if(diffDays(dc.expiry,jdt)<0)return{k,name:t.short,st:'bad',txt:'Hết hạn '+fmtDate(dc.expiry)+(j.joinDate?', trước ngày nhập tàu':'')};
+  if(diffDays(dc.expiry,endIso)<0)return{k,name:t.short,st:'short',txt:'Hết hạn '+fmtDate(dc.expiry)+', giữa hợp đồng'};
+  return{k,name:t.short,st:'ok',txt:'Còn hạn đến '+fmtDate(dc.expiry)};
+ });
+}
+const vnNorm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d');
+function jobSearchHit(j,q){
+ const terms=vnNorm(q).split(/\s+/).filter(Boolean);
+ let r={};try{r=rk(j.rank)||{}}catch(e){}
+ const hay=vnNorm([co(j.companyId).name,j.companyName,j.groupName,j.srcNote,j.vessel,j.shipType,j.flag,j.route,r.abbr,r.name,j.salaryMin,j.salaryMax,j.cur,j.contact].join(' '));
+ return terms.every(t=>{
+  if(/^\d{3,}$/.test(t)){const n=Number(t),mn=j.cur==='VND'?(j.salaryMin||0)/VND_RATE:(j.salaryMin||0),mx=j.salaryMax?smaxUsd(j):1e9;return(mn<=n*1.1&&mx>=n*0.9)||hay.indexOf(t)>=0}
+  return hay.indexOf(t)>=0});
+}
+function filteredJobs(){
+ const f=state.filters;
+ let L=state.jobs.filter(j=>j.status==='approved'&&!isBlockedCo(j.companyId)&&jLive(j));
+ if(f.rank!=='ALL'&&!(f.q||'').trim())L=L.filter(j=>j.rank===f.rank);
+ if((f.q||'').trim())L=L.filter(j=>jobSearchHit(j,f.q));
+ if(f.ship!=='ALL')L=L.filter(j=>j.shipType===f.ship);
+ if(f.owner!=='ALL')L=L.filter(j=>j.owner===f.owner);
+ if(f.minSalary>0)L=L.filter(j=>smaxM(j)>=f.minSalary);
+ if(f.within!=='ALL')L=L.filter(j=>jIn(j)===null||jIn(j)<=Number(f.within));
+ if(f.sort==='new')L.sort((a,b)=>a.postedHrs-b.postedHrs);
+ if(f.sort==='pay')L.sort((a,b)=>smaxUsd(b)-smaxUsd(a));
+ if(f.sort==='join')L.sort((a,b)=>(jIn(a)===null?99999:jIn(a))-(jIn(b)===null?99999:jIn(b)));
+ return L;
+}
+function alertJobs(){
+ const a=state.alert;
+ return state.jobs.filter(j=>j.status==='approved'&&!isBlockedCo(j.companyId)&&j.rank===a.rank&&smaxM(j)>=a.minSalary&&jLive(j)&&(jIn(j)===null||jIn(j)<=a.within));
+}
+function ago(h){return h<24?h+' giờ trước':Math.floor(h/24)+' ngày trước'}
+const isLocked=j=>!state.pro&&j.postedHrs<36;
+/* Tỷ giá tạm tính chỉ để so sánh lương VND với lương USD khi lọc và ghép tin */
+const VND_RATE=25000;
+const smaxM=j=>j.salaryMax?smaxUsd(j):1e9;
+const smaxUsd=j=>j.cur==='VND'?j.salaryMax/VND_RATE:j.salaryMax;
+const trieu=n=>{const x=n/1e6;return Number.isInteger(x)?String(x):x.toFixed(1).replace('.',',')};
+const salMain=j=>!j.salaryMin?'Thỏa thuận':j.cur==='VND'?(j.salaryMin===j.salaryMax?trieu(j.salaryMin):trieu(j.salaryMin)+'–'+trieu(j.salaryMax))+' triệu':(j.salaryMin===j.salaryMax?usd(j.salaryMin):usd(j.salaryMin)+'–'+usd(j.salaryMax));
+const salUnit=j=>j.cur==='VND'?'VND/tháng':'USD/tháng';
+const salLine=j=>!j.salaryMin?'Lương thỏa thuận':salMain(j)+(j.cur==='VND'?' VND':' USD');
+const ownerLabel=o=>o==='vn'?'Việt Nam':'Nước ngoài';
+
+/* ---------- ad parser (bản thử dùng quy tắc đơn giản, bản thật dùng AI) ---------- */
+function parseAd(t){
+ const s=t.toLowerCase(),v={};
+ v.negotiable=/(thỏa thuận|thoả thuận|negotiable|\bdeal\b|inbox (để )?(biết|hỏi) lương|lương (cao|hấp dẫn|ib))/.test(s);
+ const RM=[['MASTER',/(master|captain|capt\b|thuyền trưởng)/],['CO',/(c\/o|\bco\b|chief officer|1st officer|đại phó)/],['O2',/(2\/o|\b2o\b|2nd officer|second officer|phó 2|phó hai)/],['O3',/(3\/o|\b3o\b|3rd officer|third officer|phó 3|phó ba)/],['CE',/(c\/e|\bce\b|chief eng|máy trưởng)/],['E2',/(2\/e|\b2e\b|2nd eng|second eng|máy 2|máy hai)/],['E3',/(3\/e|\b3e\b|3rd eng|third eng|máy 3|máy ba)/],['E4',/(4\/e|\b4e\b|4th eng|máy 4|máy tư)/],['ETO',/(\beto\b|\be\/e\b|electrician|thợ điện)/],['BSN',/(bosun|bsn|thủy thủ trưởng|thuỷ thủ trưởng)/],['AB',/(\bab[de]?\b|able seaman|thủy thủ|thuỷ thủ)/],['OS',/(\bosd?\b|ordinary seaman)/],['OIL',/(oiler|\bolr\b|thợ máy)/],['FIT',/(fitter|\bftr\b)/],['COOK',/(cook|\bcck\b|đầu bếp)/]];
+ for(const r of RM){if(r[1].test(s)){v.rank=r[0];break}}
+ const SM=[['Oil tanker',/(tàu dầu|oil tanker|crude|vlcc|aframax)/],['Chemical tanker',/(hóa chất|chemical)/],['Product tanker',/product/],['LPG/LNG',/(lpg|lng|\bgas\b|khí hóa lỏng)/],['Container',/(container|\bcont\b|teu)/],['Bulk carrier',/(bulk|hàng rời|bulker|\bbc\b|supramax|handymax|panamax|cape ?size|handysize)/],['General cargo',/(general cargo|hàng tổng hợp|hàng khô|hàng bách hóa|bách hóa|tàu hàng|\bgc\b|\bg\/c\b|multipurpose|\bmpp?\b)/]];
+ for(const r of SM){if(r[1].test(s)){v.shipType=r[0];break}}
+ const num=x=>parseFloat(String(x).replace(',','.'));
+ let m=s.match(/(\d+(?:[.,]\d+)?)\s*(?:-|–|—|~|đến|to)\s*(\d+(?:[.,]\d+)?)\s*(?:triệu|tr\b|củ)/);
+ if(m){v.cur='VND';v.salaryMin=Math.round(num(m[1])*1e6);v.salaryMax=Math.round(num(m[2])*1e6)}
+ else if((m=s.match(/(\d+(?:[.,]\d+)?)\s*(?:triệu|tr\b|củ)/))){v.cur='VND';v.salaryMin=v.salaryMax=Math.round(num(m[1])*1e6)}
+ else if((m=s.match(/(\d[\d.,]{2,6})\s*(?:-|–|—|~|đến|to)\s*(\d[\d.,]{2,6})/))){v.cur='USD';v.salaryMin=+m[1].replace(/[.,]/g,'');v.salaryMax=+m[2].replace(/[.,]/g,'')}
+ else if((m=s.match(/(?:\$\s*(\d[\d.,]{2,5})|(\d[\d.,]{2,5})\s*(?:usd|\$|đô))/))){const x=+(m[1]||m[2]).replace(/[.,]/g,'');v.cur='USD';v.salaryMin=v.salaryMax=x}
+ const vnOwner=/(chủ tàu\s*(?:là\s*)?(?:vn\b|việt)|chủ\s*vn\b|tàu\s*(?:vn\b|việt nam|trong nước|nội địa)|trong nước|nội địa|vn owner)/.test(s);
+ const foreignOwner=/(chủ tàu\s*(?:nước ngoài|ngoại|nn\b)|foreign|nước ngoài|chủ ngoại|hy lạp|nhật bản|hàn quốc)/.test(s);
+ v.owner=vnOwner?'vn':foreignOwner?'foreign':(v.cur==='VND'?'vn':'foreign');
+ let dm=s.match(/(?:nhập tàu|join|eta|sign on|lên tàu)[^\d]{0,15}(\d{1,2})[\/.](\d{1,2})/);
+ if(!dm){for(const x of s.matchAll(/(?<!\d)(\d{1,2})[\/.](\d{1,2})(?!\d)/g)){if(+x[1]<=31&&+x[2]<=12&&+x[1]>0&&+x[2]>0){dm=x;break}}}
+ if(dm&&+dm[1]<=31&&+dm[2]>=1&&+dm[2]<=12){let y=TODAY.getFullYear();let dt=new Date(y,+dm[2]-1,+dm[1]);if(dt<TODAY)dt=new Date(y+1,+dm[2]-1,+dm[1]);v.joinDate=iso(dt)}
+ m=s.match(/(\d{1,2})\s*(?:tháng|months?|mths?)/);if(m)v.months=+m[1];
+ m=t.match(/(0\d[\d .]{7,11}\d)/);if(m)v.contact=m[1].trim();
+ m=s.match(/(\d{2,3})\s*k\s*dwt/);if(m)v.dwt=m[1]+'.000 DWT';
+ m=s.match(/(panama|marshall|liberia|singapore flag|vietnam|hong kong|bahamas)/);if(m)v.flag=m[1].replace(' flag','').replace(/^./,c=>c.toUpperCase());
+ return v;
+}
+
+/* ---------- icons ---------- */
+const IC={
+ chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+ home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>',
+ cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+ warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 20h20L12 3zM12 10v5M12 18v.5"/></svg>',
+ anchor:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h18l-2.5 5h-13z"/><path d="M10 14v-3.5h6V14M12.5 10.5V7h2v3.5"/><path d="M3 21.5q1.5-1.2 3 0t3 0 3 0 3 0 3 0"/></svg>',
+ brief:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>',
+ file:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
+ user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+ check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 2 3.1-.3 1 3 2.7 1.6-.9 3 .9 3-2.7 1.6-1 3-3.1-.3-2.4 2-2.4-2-3.1.3-1-3L3.8 15l.9-3-.9-3 2.7-1.6 1-3 3.1.3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>',
+ bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>'
+};
+
+/* ---------- views: shared ---------- */
+function epa(r){const n=Math.max(r.n,1);return'<div class="epa '+r.kind+(r.n===0?' rating':'')+'" aria-hidden="true">'+'<i></i>'.repeat(n)+'</div>'}
+function header(){
+ const label=state.role==='sea'?'Thuyền viên':state.role==='co'?'Công ty':'Quản trị';
+ return'<header class="top"><div class="wrap top-in"><div><div class="brand">'+IC.anchor+'CrewJob</div><div class="tagline">Giấy tờ và việc làm cho thuyền viên</div></div><div class="row" style="gap:10px;flex-wrap:nowrap"><span class="sub">'+label+'</span></div></div></header>';
+}
+function welcome(){
+ return'<main class="wrap welcome"><div class="brand">'+IC.anchor+'CrewJob</div><p class="tag">Giấy tờ và việc làm cho thuyền viên</p><section class="card stack" style="margin:12px 0">'+authCard()+'</section><h1 class="sec-title" style="font-size:26px">Bạn dùng app với vai trò nào?</h1><div class="choose">'+
+  '<button class="choice" data-a="role" data-v="sea"><span class="ic">'+IC.user+'</span><span class="ct">Thuyền viên</span><span class="cd">Quét giấy tờ để lưu số và ngày hết hạn, nhận nhắc hạn, tìm việc theo chức danh và ngày nhập tàu.</span><span class="go">Bắt đầu</span></button>'+
+  '<button class="choice" data-a="role" data-v="co"><span class="ic">'+IC.brief+'</span><span class="ct">Công ty tuyển dụng</span><span class="cd">Gõ một dòng, app tự điền tin. Thuyền viên thấy ngay, ứng viên nhắn thẳng cho bạn.</span><span class="go">Đăng tin nhanh</span></button></div>'+
+  '<label class="legalchk"><input type="checkbox" data-c="legalOK"'+(state.legalOK?' checked':'')+'><span>Tôi từ đủ 18 tuổi, đã đọc và đồng ý với <button class="linkb" type="button" data-a="openLegal" data-v="terms">Điều khoản sử dụng</button> và <button class="linkb" type="button" data-a="openLegal" data-v="privacy">Chính sách bảo mật</button>, trong đó app chỉ đọc chữ trên ảnh giấy tờ ngay trên máy tôi và không lưu ảnh.</span></label>'+
+  (state.isAdmin?'<button class="btn ghost full" data-a="role" data-v="ad">Vào trang Quản trị</button>':'')+'</main>';
+}
+function navBar(){
+ const un=unreadSea();
+ const B=(id,l,ic,b)=>'<button data-a="tab" data-v="'+id+'" '+(state.tab===id?'aria-current="page"':'')+'>'+IC[ic]+l+(b?'<i class="nbadge">'+b+'</i>':'')+'</button>';
+ return'<nav class="nav"><div class="nav-in">'+B('jobs','Việc làm','brief')+B('docs','Giấy tờ','file')+B('msgs','Tin nhắn','chat',un)+B('me','Hồ sơ','user')+'</div></nav>';
+}
+function banner(){return''}
+function selOpts(list,cur){return list.map(o=>'<option value="'+esc(o[0])+'"'+(String(o[0])===String(cur)?' selected':'')+'>'+esc(o[1])+'</option>').join('')}
+const rankOpts=cur=>selOpts(RANKS.map(r=>[r.id,r.abbr+' · '+r.name]),cur);
+const shipOpts=cur=>selOpts(SHIPS.map(s=>[s,s]),cur);
+
+/* ---------- views: seafarer / jobs ---------- */
+/* Tin admin tổng hợp: không có tài khoản nhà tuyển dụng trong app, nên cho gọi hoặc nhắn Zalo thẳng tới số trong tin */
+function contactBtns(ct){const m=String(ct||'').replace(/[.\s-]/g,'').match(/(?:\+?84|0)\d{9}/);if(!m)return '';let ph=m[0].replace(/^\+?84/,'0');
+ return '<div class="row"><a class="btn accent" href="tel:'+ph+'">Gọi '+esc(ph)+'</a><a class="btn ghost" href="https://zalo.me/'+ph+'">Nhắn Zalo</a></div>'}
+function jobCard(j){
+ const r=rk(j.rank),c=co(j.companyId),locked=isLocked(j),open=state.expanded===j.id&&!locked;
+ const m=null,bad=0;
+ const dj=jIn(j),hasT=!!getThread(j.id,'me');
+ const sal=locked||!state.pro?'<span class="lockt">Pro</span><small>xem lương</small>':salMain(j)+(j.salaryMin?'<small>'+salUnit(j)+'</small>':'');
+ const isAd=true,msgBtn='';
+ let h='<article class="job"><button class="job-top" data-a="expand" data-v="'+j.id+'" aria-expanded="'+open+'">'+epa(r)+
+  '<div style="min-width:0"><div class="job-rank">'+esc(r.abbr)+'<small>'+esc(r.name)+'</small></div>'+
+  '<div class="job-meta"><span><b>'+esc(j.shipType)+'</b></span><span>Chủ tàu <b>'+ownerLabel(j.owner)+'</b></span><span>Nhập tàu <b class="mono">'+joinTxt(j)+'</b></span><span>'+(dj===null?'':dj===0?'hôm nay':'còn '+dj+' ngày')+'</span></div></div>'+
+  '<div class="sal">'+sal+'</div></button>';
+ h+='<div class="job-foot">'+(c.id==='cx'?'<span class="sub">'+esc(j.groupName?(j.srcNote&&j.srcNote.indexOf(' · ')>0&&j.srcNote.indexOf('Nguồn')>j.srcNote.indexOf(' · ')?j.srcNote.split(' · ')[0]+' · ':'')+'Nhóm '+j.groupName+(j.groupMembers?' ('+j.groupMembers+')':''):(j.srcNote||c.name))+'</span>':'<span class="sub"><b>'+esc(c.name||'Nhà tuyển dụng')+'</b></span>')+'<span class="sub">· '+ago(j.postedHrs)+'</span>';
+ if(m)h+=bad===0?'<span class="pill ok">Đủ điều kiện</span>':'<span class="pill '+(m.some(x=>x.st==='missing'||x.st==='bad')?'bad':'warn')+'">Cần xử lý '+bad+' giấy tờ</span>';
+ if(locked)h+='<span class="pill plain" style="--c:var(--accent)">Tin mới · Pro xem trước</span>';
+ if(hasT)h+='<span class="pill plain soon">Đã nhắn tin</span>';
+ if(state.applied.has(j.id))h+='<span class="pill ok">Đã gửi hồ sơ</span>';
+ h+='</div>';
+ if(state.expanded===j.id&&locked){h+='<div class="detail"><div class="locked-note">Tin đăng '+ago(j.postedHrs)+'. Gói miễn phí xem sau '+Math.ceil(36-j.postedHrs)+' giờ nữa. Thành viên Pro xem ngay khi tin lên.<div style="margin-top:8px"><button class="btn accent sm" data-a="goMe">Xem gói Pro</button></div></div></div>'}
+ if(open){
+  h+='<div class="detail"><dl class="facts">'+
+   '<div><dt>Trọng tải</dt><dd>'+esc(j.dwt||'—')+'</dd></div><div><dt>Cờ</dt><dd>'+esc(j.flag||'—')+'</dd></div>'+
+   '<div><dt>Tuyến</dt><dd>'+esc(j.route||'—')+'</dd></div><div><dt>Tên tàu</dt><dd>'+esc(j.vessel||'Chưa công bố')+'</dd></div>'+
+   '<div><dt>Hợp đồng</dt><dd>'+(j.months?j.months+' tháng':'Chưa ghi')+'</dd></div><div><dt>Nguồn tin</dt><dd>'+(j.groupName?'<b>'+esc(j.groupName)+'</b>'+(j.groupMembers?'<br>'+esc(j.groupMembers)+' thành viên':'')+'<br><span class="sub">Facebook · nhóm tuyển dụng</span>'+(/^https:\/\/(www\.)?facebook\.com\//.test(j.groupUrl||'')?'<br><a href="'+esc(j.groupUrl)+'" target="_blank" rel="noopener">Mở nhóm</a>':'')+(/^https:\/\/(www\.|m\.|web\.)?facebook\.com\//.test(j.srcUrl||'')?'<br><a class="btn accent sm" style="margin-top:6px" href="'+esc(j.srcUrl)+'" target="_blank" rel="noopener">Xem bài gốc trên Facebook</a>':''):j.srcNote?esc(j.srcNote):j.source==='admin'?'Admin nhập':'Công ty đăng')+'</dd></div></dl>';
+  if(state.pro){
+   h+='<div><div class="lbl" style="margin-bottom:6px">Liên hệ</div><div class="contact"><span>'+esc(j.contact||c.contact)+'</span><button class="btn ghost sm" data-a="copy" data-v="'+esc(j.contact||c.contact)+'">Sao chép</button></div></div>';
+   if(state.pendingApply===j.id)h+='<div class="notice"><b>Chia sẻ giấy tờ với nhà tuyển dụng?</b><span class="sub">Nhà tuyển dụng sẽ xem danh sách giấy tờ và hạn dùng của bạn (không có số giấy tờ, không có ảnh) để kiểm tra hồ sơ. Bạn tắt chia sẻ được bất cứ lúc nào trong Hồ sơ.</span><div class="row"><button class="btn accent sm" data-a="applyShare">Đồng ý và gửi</button><button class="btn ghost sm" data-a="applyNoShare">Gửi, không chia sẻ giấy tờ</button><button class="btn ghost sm" data-a="applyCancel">Hủy</button></div></div>';
+   else if(isAd)h+=contactBtns(j.contact||c.contact);
+   else h+='<div class="row"><button class="btn accent" data-a="apply" data-v="'+j.id+'"'+(state.applied.has(j.id)?' disabled':'')+'>'+(state.applied.has(j.id)?'Đã gửi hồ sơ':'Gửi hồ sơ một chạm')+'</button>'+msgBtn+'</div>';
+   h+='<p class="safe">Nhà tuyển dụng hợp lệ không thu phí hoặc đặt cọc của thuyền viên. Gặp yêu cầu như vậy, hãy báo cáo.</p>';
+   if(j.source==='admin')h+='<p class="safe">Tin tổng hợp từ nguồn công khai. Nếu bạn là chủ tin và muốn gỡ, bấm Báo cáo tin.</p>';
+   h+='<div class="row"><button class="btn ghost sm" data-a="reportOpen" data-v="'+j.id+'">Báo cáo tin</button></div>'+reportPanel(j.id);
+  }else{
+   h+='<div class="locked-note">Gói miễn phí không xem được mức lương, liên hệ và đối chiếu giấy tờ. <button class="btn accent sm" data-a="goMe" style="margin-left:6px">Xem gói Pro</button></div>'+(msgBtn?'<div class="row">'+msgBtn+'</div>':'');
+  }
+  h+='</div>';
+ }
+ return h+'</article>';
+}
+function jobsView(){
+ const f=state.filters,L=filteredJobs();
+ const chips=['ALL'].concat(RANKS.map(r=>r.id)).map(id=>'<button class="chip'+(f.rank===id?' on':'')+'" data-a="fRank" data-v="'+id+'">'+(id==='ALL'?'Tất cả':esc(rk(id).abbr))+'</button>').join('');
+ let h='<h1 class="sec-title">Tin tuyển dụng</h1>';
+ h+='<div class="field" style="margin-bottom:8px"><label for="f-q" class="sr-only" style="position:absolute;left:-9999px">Tìm kiếm tin tuyển dụng</label><input type="search" id="f-q" data-q="1" placeholder="Tìm công ty, tên tàu, chức danh, mức lương (vd 4000)…" autocomplete="off" value="'+esc(f.q||'')+'"></div>';
+ h+='<div class="chips" role="group" aria-label="Chức danh">'+chips+'</div>';
+ const pre=[0,1000,1500,2000,3000,4000,5000,6000,7000,8000,10000],cm=f.salMode==='custom';
+ h+='<div class="filters2"><div class="field"><label for="f-ship">Loại tàu</label><select id="f-ship" data-c="fShip"><option value="ALL">Tất cả</option>'+shipOpts(f.ship)+'</select></div>'+
+  '<div class="field"><label for="f-own">Chủ tàu</label><select id="f-own" data-c="fOwner">'+selOpts([['ALL','Tất cả'],['foreign','Nước ngoài'],['vn','Việt Nam']],f.owner)+'</select></div>'+
+  '<div class="field wide"><label for="f-min">Lương tối thiểu (USD/tháng)</label><div class="row" style="flex-wrap:nowrap"><select id="f-min" data-c="fMin">'+selOpts(pre.map(n=>[n,n?'từ '+usd(n):'Bất kỳ']).concat([['custom','Nhập số khác…']]),cm?'custom':f.minSalary)+'</select>'+(cm?'<input type="number" id="f-minc" data-c="fMinC" min="0" step="any" inputmode="numeric" placeholder="vd 4500" value="'+(f.minSalary||'')+'" aria-label="Lương tối thiểu nhập tay">':'')+'</div></div></div>';
+ if(state.pro&&state.alert.on){const n=alertJobs().length;h+='<p class="sub">Thông báo đang bật: '+esc(rk(state.alert.rank).abbr)+', từ '+usd(state.alert.minSalary)+' USD, nhập tàu trong '+state.alert.within+' ngày. Hiện có <b>'+n+'</b> tin khớp.</p>'}
+ h+='<div class="jobs">'+(L.length?L.map(jobCard).join(''):'<div class="empty">Không có tin nào khớp. Thử đổi từ khóa, chức danh hoặc thời gian nhập tàu.</div>')+'</div>';
+ h+='<p class="sub">Lương VND được quy đổi tạm tính 25.000 ₫/USD khi lọc và ghép tin. Tin tự ẩn khi quá ngày nhập tàu.</p>';
+ return h;
+}
+
+/* ---------- views: seafarer / docs ---------- */
+function resetNew(){state.newDoc={key:null,expiry:'',number:'',issue:'',cap:'',title:'',scan:null,found:[]}}
+const docName=x=>x.key==='OTHER'&&x.title?x.title+' (Giấy tờ khác)':CERT[x.key].name;
+function within11(exp){if(!exp)return false;const lim=new Date(TODAY);lim.setMonth(lim.getMonth()+11);return parseD(exp)<=lim}
+const fmtVN=iso=>/^\d{4}-\d{2}-\d{2}$/.test(iso||'')?iso.slice(8)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4):'';
+function parseVN(str){
+ str=String(str||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(str))return str;
+ const m=str.match(/^(\d{1,2})\D+(\d{1,2})\D+(\d{4})$/)||str.match(/^(\d{2})(\d{2})(\d{4})$/);if(!m)return null;
+ const y=+m[3],mo=+m[2],d=+m[1],dt=new Date(y,mo-1,d);if(y<1990||y>2100||dt.getMonth()!==mo-1||dt.getDate()!==d)return null;
+ return y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+}
+const dateInp=(id,name,iso,req)=>'<input type="text" inputmode="numeric" autocomplete="off" placeholder="dd/mm/yyyy" maxlength="10" data-dm="1" id="'+id+'" name="'+name+'" value="'+esc(fmtVN(iso))+'"'+(req?' required':'')+'>';
+/* ===== Bộ phân tích chữ đọc từ ảnh giấy tờ thuyền viên (chạy hoàn toàn trên máy) ===== */
+/* Thời hạn chuẩn (năm) theo loại giấy, dùng để suy ra ngày còn thiếu. */
+const OCR_VALID={COC:5,GMDSS:5,BST:5,PSCRB:5,AFF:5,MEFA:5,MECA:5,SSO:5,ECDIS:5,RADAR:5,ARPA:5,YF:10,CHOLERA:1,TANKER:5,GAS:5,BRM:5,SDSD:5,PASSPORT:10};
+const OCR_MONTHS={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12,ENE:1,ABR:4,AGO:8,DIC:12};
+const o2=n=>String(n).padStart(2,'0');
+function oIso(y,m,d){y=+y;m=+m;d=+d;if(y<1950||y>2100||m<1||m>12||d<1||d>31)return null;const t=new Date(Date.UTC(y,m-1,d));if(t.getUTCMonth()!==m-1)return null;return y+'-'+o2(m)+'-'+o2(d)}
+const oDig=s=>s.replace(/[OoQD]/g,'0').replace(/[Il|!]/g,'1').replace(/[Ss$]/g,'5').replace(/B/g,'8').replace(/Z/g,'2');
+/* Tìm mọi ngày trong chữ. Trả về {iso,pos,d1 (ngày chỉ có 1 chữ số → có thể bị mất số đầu)} */
+function oDates(T){
+ const out=[],push=(pos,y,m,d,raw)=>{const v=oIso(y,m,d);if(v)out.push({pos,iso:v,d1:String(raw).length===1})};let m;
+ const D='([0-9OoIlSB]{1,2})',Y='([12][0-9OoIlSB]{3})',S='\\s*[\\/.\\-:,]\\s*';
+ const r1=new RegExp('(?<![0-9])'+D+S+D+S+Y+'(?![0-9])','g');
+ while(m=r1.exec(T)){if(!/\d/.test(m[1]+m[2]))continue;push(m.index,oDig(m[3]),oDig(m[2]),oDig(m[1]),m[1])}
+ const r4=/(?<!\d)(\d{2})[.:\/,](\d{2})(\d{4})(?!\d)/g;while(m=r4.exec(T))push(m.index,m[3],m[2],m[1],m[1]);
+ const r5=/(?<!\d)(\d{2})[\/.\-](\d{2})\s+(\d{4})(?!\d)/g;while(m=r5.exec(T))push(m.index,m[3],m[2],m[1],m[1]);
+ const r2=/(?<!\d)(\d{4})\s*[\/.\-]\s*(\d{1,2})\s*[\/.\-]\s*(\d{1,2})(?!\d)/g;while(m=r2.exec(T))push(m.index,m[1],m[2],m[3],m[3]);
+ const r3=/(?<!\d)(\d{1,2})[\s.\-\/]*([A-Za-z]{3})[A-Za-z]*\.?[\s.\-\/,]*(\d{4})(?!\d)/g;
+ while(m=r3.exec(T)){const mo=OCR_MONTHS[m[2].toUpperCase()];if(mo)push(m.index,m[3],mo,m[1],m[1])}
+ const r6=/(\d{1,2})[^\d\n]{0,25}?th[aá]ng[^\d\n]{0,12}?(\d{1,2})[^\d\n]{0,15}?n[aă]m[^\d\n]{0,12}?(\d{4})/gi;while(m=r6.exec(T))push(m.index,m[3],m[2],m[1],m[1]);
+ const seen=new Set();return out.sort((a,b)=>a.pos-b.pos).filter(d=>{const k=d.pos+d.iso;if(seen.has(k))return false;seen.add(k);return true});
+}
+const RE_BIRTH=/(sinh|birth|dob|nacimiento|n[aă]m\s*sinh)/i;
+const RE_ISS=/(c[aấâ]?p\s*ng[aà]y|ng[aà]y\s*c[aấâ]?p|issued?\s*on|date\s*of\s*issue|emisi[oó]n|of\s*issue)/i;
+const RE_EXP=/(gi[aá]\s*tr[iị]\s*[đd][eếé]n|valid\s*until|until|expir|expiraci|h[eế]t\s*h[aạ]n|d[eé]n\s*ng[aà]y)/i;
+/* MRZ hộ chiếu: số hộ chiếu + ngày hết hạn (đáng tin nhất) */
+function oMRZ(T){
+ const L=T.toUpperCase().split(/\n/).map(x=>x.replace(/\s+/g,'')).filter(x=>x.indexOf('<')>=0||/VNM\d{6}/.test(x));
+ for(const ln of L){
+  const m=ln.match(/([A-Z][0-9OIS]{7,8})<?[0-9OIS<]?[A-Z<]{3}([0-9OIS]{6})[0-9OIS<][MF<]([0-9OIS]{6})/);
+  if(m){const e=oDig(m[3]),b=oDig(m[2]);const exp=oIso('20'+e.slice(0,2),e.slice(2,4),e.slice(4,6));return{number:m[1].slice(0,1)+oDig(m[1].slice(1)),expiry:exp,birth:oIso((+b.slice(0,2)>40?'19':'20')+b.slice(0,2),b.slice(2,4),b.slice(4,6))}}
+ }
+ return null;
+}
+/* Chuẩn hóa một ứng viên số giấy tờ */
+function oNormNum(s){
+ s=String(s).toUpperCase().replace(/[‘’'"`´,;:%*«»|_—–]+/g,'').replace(/^[.\-\/]+|[.\-\/]+$/g,'');
+ s=s.replace(/^([A-Z]{0,3}?)([0-9OIL]*\d[0-9OIL]*)/,(a,p,d)=>p+oDig(d));
+ s=s.replace(/^([A-Z]?\d{2,5})\.?([A-Z]{2,3})\/?BNH[PE]$/,'$1.$2/BNHP');
+ /* số COC Cục Hàng hải: A1991.MT2-01, A1859.CO1 (ML Kit hay mất dấu chấm, đọc 1 thành k, thừa chữ cuối) */
+ s=s.replace(/^([A-Z]\d{3,5})\.?([A-Z]{2}\d)(?:-([0-9OILK]{2})[A-Z]{0,2})?$/,(x,p,c,d)=>p+'.'+c+(d?'-'+oDig(d.replace(/K/g,'1')):''));
+ s=s.replace(/([A-Z])Q/g,'$1O').replace(/Q([A-Z])/g,'O$1');
+ s=s.replace(/^(\d{2,5})(DH)$/,'$1/$2').replace(/[BE8]NH[PEFR]$/,'BNHP');
+ s=s.replace(/-C[DĐ]\.?[1IL]$/,'-CĐ.I').replace(/BNHE$/,'BNHP').replace(/([A-Z0-9])(BNHP)$/,'$1/$2').replace(/\/+/g,'/');
+ return s;
+}
+const RE_NUM=/^(?:[A-Z]{0,3}\d{2,7}(?:[.\-\/][A-Z0-9ĐI]{1,8}){1,4}|[A-Z]\d{7,8}|[A-Z]\d{3,5}\.[A-Z]{1,3}\d?)$/;
+function oNumOk(s){
+ if(!RE_NUM.test(s)||s.length<4||s.length>22)return false;
+ if(!/[A-Z]/.test(s))return false; /* 1978/2010 */
+ if(/^\d{1,2}[.\-\/]\d{1,2}[.\-\/]/.test(s))return false; /* ngày */
+ if(/^[A-Z]?-?[IVX]+\//.test(s))return false; /* quy tắc VI/2 */
+ if(/VNM/.test(s))return false;
+ return true;
+}
+/* Ứng viên số giấy tờ từ chữ: cạnh nhãn "số"/"No" được cộng điểm */
+function oNums(T){
+ T=String(T).normalize('NFC').replace(/[…‥⋯·•]/g,'.');
+ const toks=T.replace(/\n/g,' \n ').split(/[ \t]+/).filter(Boolean),out=[];
+ for(let i=0;i<toks.length;i++){
+  let raw=toks[i];
+  /* nhãn "số" dính liền số: s610921-GOC */
+  raw=raw.replace(/^[s5$][o6é5&8bóôốồ][:._\-]{0,12}(?=[0-9])/i,'').replace(/^s[o6é5&8bóôốồ][:._\-]{1,12}(?=[A-Z])/i,'').replace(/^[^A-Za-z0-9]{2,}/,'');
+  const cands=[raw];
+  if(i+1<toks.length&&/^[A-Z]{1,2}$/.test(toks[i])&&/^\d{3,}/.test(toks[i+1]))cands.push(toks[i]+toks[i+1]); /* "A 1859" */
+  if(i+1<toks.length&&/^[A-Z]{0,3}\d{2,6}[.\-\/]?$/.test(raw.replace(/[.,]+$/,'.'))&&/^[A-Z0-9][A-Z0-9.\-\/]{1,10}$/.test(toks[i+1]))cands.push(raw.replace(/,$/,'.')+toks[i+1]); /* "2590. BM/BNHP" */
+  for(const c of cands){const n=oNormNum(c);const part=/^[A-Z]{1,2}\d{4,6}$/.test(n);if(!oNumOk(n)&&!part)continue;
+   const back=toks.slice(Math.max(0,i-4),i).join(' ');let sc=1;
+   if(/(s[oố6é5&8bóôồ](?![a-z])|\bno\b|n[o°º]\.?|number|certificate|ch[uứ]ng\s*ch[iỉ])/i.test(back)||/^s[o6é5&8bóôốồ]/i.test(toks[i]))sc+=3;
+   if(n.includes('/'))sc+=2;if(n.includes('.'))sc+=1;if(/(BNHP|CĐ\.I|\/DH|-DH|BTTTT|GOC|HP-|MT\d|CO\d|\.CO|\.ED|\.AR|\.BM|\.SD)/.test(n))sc+=2;
+   if(/^[A-Z]\d{7,8}$/.test(n))sc+=2;
+   if(part&&!/^[A-Z]\d{7,8}$/.test(n)){if(sc<4)continue;sc-=3}
+   out.push({n,sc})}
+ }
+ return out;
+}
+/* Chức danh ghi trên COC */
+function ocrCap(T){const t=String(T||'').normalize('NFC');
+ const R=[['CE',/chief\s*engineer|m[aá]y\s*tr[uư][oởóo]ng/i],['E2',/second\s*engineer|m[aá]y\s*hai/i],['ETO',/electro.?technical/i],['EOOW',/engineering\s*watch/i],['CO',/chief\s*off[il1]cer|đ[aạ]i\s*ph[oó]/i],['OOW',/navigational\s*watch/i],['MASTER',/\bmaster\b|thuy[eềé]n\s*tr[uư]/i]];
+ for(const [id,re] of R)if(re.test(t))return id;return ''}
+/* Phân tích chữ của MỘT lượt đọc */
+function parseOcrText(text,key){
+ const T=String(text||''),mrz=key==='PASSPORT'?oMRZ(T):null,yy=new Date().getFullYear();
+ let ds=oDates(T);
+ const births=new Set(ds.filter(d=>RE_BIRTH.test(T.slice(Math.max(0,d.pos-40),d.pos))).map(d=>d.iso));
+ if(mrz&&mrz.birth)births.add(mrz.birth);
+ ds=ds.filter(d=>{const y=+d.iso.slice(0,4);return y>=yy-25&&y<=yy+12&&!births.has(d.iso)&&!(+d.iso.slice(0,4)<1995)});
+ ds.forEach(d=>{const pre=T.slice(Math.max(0,d.pos-45),d.pos);d.lbl=RE_EXP.test(pre)?'exp':RE_ISS.test(pre)?'iss':''});
+ return{dates:ds,nums:key==='MEDICAL'||key==='YF'||key==='CHOLERA'?[]:oNums(T),mrz};
+}
+const CONF=[['0','6'],['0','8'],['0','9'],['1','4'],['1','7'],['3','8'],['3','9'],['5','6'],['5','8'],['6','8'],['8','9'],['2','7']];
+const confPair=(a,b)=>CONF.some(([x,y])=>(a===x&&b===y)||(a===y&&b===x));
+/* hai cặp ngày/tháng gần giống nhau do đọc nhầm 1 chữ số */
+function dmFuzzy(a,b){if(a===b)return 2;let diff=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i]){if(a[i]==='-'||b[i]==='-'||!confPair(a[i],b[i]))return 0;diff++}return diff===1?1:0}
+/* Gộp nhiều lượt đọc → kết quả cuối. Trả thêm cờ "suy ra" để nhắc người dùng kiểm tra. */
+function combineOcr(passes,key){
+ const res={number:'',issue:'',expiry:'',derived:'',sure:false};
+ const noExp=key==='SEAMANBOOK'||key==='DWK',V=OCR_VALID[key]||0,yy=new Date().getFullYear();
+ /* số giấy tờ */
+ const NS={};passes.forEach(p=>{if(p.mrz&&p.mrz.number)NS[p.mrz.number]=(NS[p.mrz.number]||0)+8;p.nums.forEach(x=>{NS[x.n]=(NS[x.n]||0)+x.sc})});
+ /* số bị đọc thiếu đầu/cuối (01/MFC-CĐ.I trong G3901/MFC-CĐ.I) cộng phiếu cho số đầy đủ */
+ const NK=Object.keys(NS),NS2={};NK.forEach(a=>{NS2[a]=NS[a];NK.forEach(b=>{if(b!==a&&b.length>a.length&&a.length>=4&&b.includes(a))NS2[b]=(NS2[b]||NS[b])+NS[a]*0.8})});
+ for(const k in NS2)NS[k]=NS2[k];
+ res.number=Object.keys(NS).sort((a,b)=>NS[b]-NS[a]||b.length-a.length)[0]||'';
+ if(res.number&&NS[res.number]<3)res.number=''; /* quá ít căn cứ: để trống cho người dùng nhập */
+ /* ngày: gom phiếu */
+ const C={};let mrzExp='';
+ passes.forEach(p=>{if(p.mrz&&p.mrz.expiry){mrzExp=p.mrz.expiry;C[mrzExp]=C[mrzExp]||{n:0,iss:0,exp:0,d1:0};C[mrzExp].n+=3;C[mrzExp].exp+=5}
+  p.dates.forEach(d=>{const c=C[d.iso]=C[d.iso]||{n:0,iss:0,exp:0,d1:0};c.n+=d.d1?0.5:1;if(d.lbl==='iss')c.iss++;if(d.lbl==='exp')c.exp++;if(d.d1)c.d1++})});
+ /* ngày bị mất chữ số đầu (3/09 thay vì 13/09): gộp vào ngày 2 chữ số cùng tháng */
+ for(const k of Object.keys(C))if(C[k].d1&&C[k].d1*0.5>=C[k].n-1e-9){const d=+k.slice(8);const tgt=Object.keys(C).find(o=>o!==k&&o.slice(5,7)===k.slice(5,7)&&+o.slice(8)>9&&+o.slice(8)%10===d);if(tgt){const y=k.slice(0,4),nk=y+k.slice(4,8)+tgt.slice(8);C[nk]=C[nk]||{n:0,iss:0,exp:0,d1:0};C[nk].n+=C[k].n;C[nk].iss+=C[k].iss;C[nk].exp+=C[k].exp;delete C[k]}}
+ const K=Object.keys(C);if(!K.length)return res;
+ if(noExp){res.issue=K.sort((a,b)=>(C[b].n+C[b].iss*2)-(C[a].n+C[a].iss*2)||a.localeCompare(b))[0];res.sure=C[res.issue].n>=2;return res}
+ if(key==='MEDICAL'){ /* giấy khám sức khỏe: ngày khám và ngày hết hạn khác nhau, cách 6–30 tháng */
+  let best=null;for(const i of K)for(const e of K){if(e<=i)continue;const mo=(+e.slice(0,4)-+i.slice(0,4))*12+(+e.slice(5,7)-+i.slice(5,7));if(mo<6||mo>30)continue;const s=C[i].n+C[e].n+C[i].iss+C[e].exp+(mo===24||mo===18||mo===12?1:0);if(!best||s>best.s)best={s,i,e}}
+  if(best){res.issue=best.i;res.expiry=best.e;res.sure=true}else{const s=K.sort();res.expiry=s[s.length-1];if(s.length>1)res.issue=s[0]}
+  return res;
+ }
+ /* giấy chứng nhận: hết hạn cùng ngày cùng tháng với ngày cấp, chỉ khác năm */
+ let best=null;
+ for(const i of K)for(const e of K){
+  if(e<=i)continue;const g=+e.slice(0,4)-+i.slice(0,4);if(g<1||g>10)continue;
+  const f=dmFuzzy(i.slice(5),e.slice(5));if(!f)continue;
+  let s=C[i].n+C[e].n+(f===2?4:1.5)+(V&&g===V?2:0)+C[i].iss+C[e].exp-C[i].exp-C[e].iss;
+  if(mrzExp&&e===mrzExp)s+=5;
+  if(!best||s>best.s)best={s,i,e,f};
+ }
+ if(best){
+  let dm=best.i.slice(4);
+  if(best.f===1){ /* lệch 1 chữ số: chọn theo số phiếu, hòa thì tin MRZ rồi tin ngày cấp */
+   const ve=C[best.e].n+(best.e===mrzExp?9:0),vi=C[best.i].n;if(ve>vi)dm=best.e.slice(4)}
+  res.issue=best.i.slice(0,4)+dm;res.expiry=best.e.slice(0,4)+dm;res.sure=best.f===2&&C[best.i].n+C[best.e].n>=2;
+  return res;
+ }
+ /* chỉ đọc được một ngày: xác định vai trò rồi suy ra ngày kia theo thời hạn chuẩn */
+ const one=K.sort((a,b)=>(C[b].n+C[b].iss+C[b].exp)-(C[a].n+C[a].iss+C[a].exp)||a.localeCompare(b))[0],c=C[one];
+ const isExp=one===mrzExp||c.exp>c.iss||(c.exp===c.iss&&+one.slice(0,4)>yy)||(c.exp===c.iss&&V&&+one.slice(0,4)+V<yy-1);
+ if(isExp){res.expiry=one;if(V){res.issue=(+one.slice(0,4)-V)+one.slice(4);res.derived='issue'}}
+ else{res.issue=one;if(V){res.expiry=(+one.slice(0,4)+V)+one.slice(4);res.derived='expiry'}}
+ return res;
+}
+/* Đủ tin cậy để dừng đọc thêm? */
+function ocrDone(r,key,relax){
+ const noExp=key==='SEAMANBOOK'||key==='DWK',needNum=key!=='MEDICAL'&&key!=='YF'&&key!=='CHOLERA';
+ if(needNum&&!r.number)return false;
+ if(key==='OTHER'&&r.issue)return true; /* giấy khác: có thể không có hạn */
+ if(noExp)return !!r.issue&&(r.sure||!!relax);
+ return !!(r.issue&&r.expiry&&(r.sure||!!relax));
+}
+/* tương thích: phân tích một đoạn chữ */
+function parseDocText(text,key){const r=combineOcr([parseOcrText(text,key)],key);return{number:r.number,issue:r.issue,expiry:r.expiry}}
+const OCR_LOCAL=/^(appassets\.androidplatform\.net|localhost|127\.0\.0\.1)$/.test(location.hostname);
+const OCR_BASE=OCR_LOCAL?'/assets/ocr/':'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/';
+let ocrP=null;
+function loadOCR(){if(window.Tesseract)return Promise.resolve();return ocrP||(ocrP=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=OCR_BASE+'tesseract.min.js';sc.onload=res;sc.onerror=()=>{ocrP=null;rej(new Error('load'))};document.head.appendChild(sc)}))}
+/* WebView không cho worker tự tải file từ assets, nên nạp dữ liệu chữ ở luồng chính rồi đặt sẵn vào bộ nhớ đệm mà bộ đọc chữ sẽ tự lấy. */
+async function preloadLang(){
+ await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=OCR_BASE+'eng-data.js';sc.onload=res;sc.onerror=()=>rej(new Error('eng-data'));document.head.appendChild(sc)});
+ const bin=atob(window.ENG_GZ_B64||''),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+ window.ENG_GZ_B64=null;
+ if(buf.length<100000)throw new Error('lang');
+ await new Promise((res,rej)=>{const rq=indexedDB.open('keyval-store');rq.onupgradeneeded=()=>{rq.result.createObjectStore('keyval')};rq.onerror=()=>rej(rq.error);
+  rq.onsuccess=()=>{const db=rq.result;if(!db.objectStoreNames.contains('keyval')){db.close();rej(new Error('idb'));return}
+   const tx=db.transaction('keyval','readwrite');tx.objectStore('keyval').put(buf,'./eng.traineddata');tx.oncomplete=()=>{db.close();res()};tx.onerror=()=>rej(tx.error)}});
+}
+const STAGE_VN={'loading tesseract core':'Đang nạp bộ đọc chữ','initializing tesseract':'Đang khởi động','loading language traineddata':'Đang nạp dữ liệu chữ','initializing api':'Đang chuẩn bị','recognizing text':'Đang đọc chữ'};
+let ocrNote='',ocrW=null,ocrWP=null,ocrIdle=null,ocrLast=0,ocrOnst=null,ocrLangOK=false;
+function ocrKill(){clearTimeout(ocrIdle);const w=ocrW;ocrW=null;if(w)try{w.terminate()}catch(e){}}
+/* Giữ sẵn bộ đọc chữ trong bộ nhớ để lần quét sau bắt đầu ngay; tự tắt khi không dùng 3 phút. */
+function getOcrWorker(){
+ if(ocrW)return Promise.resolve(ocrW);
+ return ocrWP||(ocrWP=(async()=>{
+  try{
+   await loadOCR();
+   if(OCR_LOCAL&&!ocrLangOK){await preloadLang();ocrLangOK=true}
+   const opt={logger:m=>{ocrLast=Date.now();if(ocrOnst)ocrOnst(m)}};
+   if(OCR_LOCAL){opt.workerPath=OCR_BASE+'worker.min.js';opt.corePath=OCR_BASE;opt.langPath=OCR_BASE;opt.workerBlobURL=false}
+   ocrW=await Tesseract.createWorker('eng',1,opt);return ocrW;
+  }finally{ocrWP=null}
+ })());
+}
+function ocrWarm(){clearTimeout(ocrIdle);getOcrWorker().then(()=>{clearTimeout(ocrIdle);ocrIdle=setTimeout(ocrKill,180000)}).catch(()=>{})}
+function ocrRun(fn,onst){
+ return new Promise(async(resolve,reject)=>{
+  let done=false;ocrLast=Date.now();ocrOnst=onst;clearTimeout(ocrIdle);
+  const fail=(m,stage)=>{if(done)return;done=true;clearInterval(iv);ocrOnst=null;ocrKill();const e=new Error(m);e.stage=stage||'';reject(e)};
+  const iv=setInterval(()=>{if(Date.now()-ocrLast>60000)fail('quá thời gian chờ','đọc chữ')},3000);
+  try{
+   const w=await getOcrWorker();ocrLast=Date.now();
+   const out=await fn(w);
+   if(!done){done=true;clearInterval(iv);ocrOnst=null;ocrIdle=setTimeout(ocrKill,180000);resolve(out)}
+  }catch(e){fail(String((e&&e.message)||e),'khởi động')}
+ });
+}
+const loadImg=u=>new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=u});
+/* mode 'r': chỉ lấy kênh đỏ, làm mờ nền hoa văn vàng và dấu đỏ để chữ đen nổi rõ */
+function mkRot(im,rot,long,mode){
+ const k=Math.min(1,long/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),cv=document.createElement('canvas'),sw=rot===90||rot===270;
+ cv.width=sw?h:w;cv.height=sw?w:h;const c=cv.getContext('2d');c.translate(cv.width/2,cv.height/2);c.rotate(rot*Math.PI/180);c.drawImage(im,-w/2,-h/2,w,h);
+ if(mode==='r'){c.setTransform(1,0,0,1,0,0);const d=c.getImageData(0,0,cv.width,cv.height),a=d.data;for(let i=0;i<a.length;i+=4){a[i+1]=a[i+2]=a[i]}c.putImageData(d,0,0)}
+ return cv;
+}
+function wordScore(r){let s=0;((r.data&&r.data.blocks)||[]).forEach(b=>b.paragraphs.forEach(p=>p.lines.forEach(l=>l.words.forEach(w=>{if(/^[A-Za-z]{3,}$/.test(w.text)&&w.confidence>55)s+=w.text.length*w.confidence/100}))));return s}
+const ORI_OK=110;
+let ocrLastRot=0;try{ocrLastRot=+localStorage.getItem('crewjob.rot')||0}catch(e){}
+/* ---- Google ML Kit (chỉ có trong app Android): đọc chữ bằng AI trên máy, nhanh hơn nhiều; lỗi thì tự quay về bộ đọc dự phòng ---- */
+const ML_OK=30;let mlSeq=0;const mlWait={};
+let mlLastRot=0;try{mlLastRot=+localStorage.getItem('crewjob.mlrot')||0}catch(e){}
+window.__mlkitCb=(id,o)=>{const f=mlWait[id];if(f){delete mlWait[id];f(o||{})}};
+const mlHas=()=>{try{return !!(window.CrewOCR&&window.CrewOCR.available())}catch(e){return false}};
+function mlRun(rot){return new Promise((res,rej)=>{const id='m'+(++mlSeq);const to=setTimeout(()=>{delete mlWait[id];rej(new Error('ML Kit quá thời gian'))},20000);mlWait[id]=o=>{clearTimeout(to);o.err?rej(new Error('ML Kit: '+o.err)):res(o)};try{window.CrewOCR.run(id,rot)}catch(e){clearTimeout(to);delete mlWait[id];rej(e)}})}
+function mlLoad(cv){const b64=cv.toDataURL('image/jpeg',0.92).split(',')[1];cv.width=0;cv.height=0;const r=String(window.CrewOCR.load(b64));if(r!=='ok')throw new Error('ML Kit nạp ảnh: '+r)}
+/* chữ đúng chiều có nhiều từ tiếng Anh thật trên giấy chứng nhận */
+function mlScore(t){t=String(t||'');return (t.match(/\b(?:[A-Z][a-z]{2,}|[A-Z]{3,}|[a-z]{3,})\b/g)||[]).length+4*(t.match(/certif|issued|valid|date|birth|republic|viet ?nam|passport|seaman|training|convention|nationality|signature|holder/ig)||[]).length}
+const RE_KEYLINE=/(nh[aậâ]n\s*s|ch[iỉ]\s*s|certificate\s*n|passport\s*n|s[oố]\s*[:.…]|c[aấ]p\s*ng|ng[aà]y\s*c[aấ]p|gi[aá]\s*tr[iị]\s*[đd]|valid|issued|expir|h[eế]t\s*h[aạ]n|\d{1,2}\s*[\/.\-:]\s*\d{1,2}\s*[\/.\-:]\s*\d{2,4})/i;
+/* Cắt riêng các dòng có số giấy tờ và ngày, phóng to rồi đọc lại: chữ to hơn thì AI đọc đúng hơn */
+function mlStrips(im,R,lines,W2){
+ const L=lines.filter(l=>l&&l.b&&RE_KEYLINE.test(l.t||'')).slice(0,8);if(!L.length)return null;
+ const F=mkRot(im,R,3200,'r'),s=F.width/W2,parts=[];
+ for(const l of L){const [x0,y0,x1,y1]=l.b,h=Math.max(8,y1-y0);
+  const sx=Math.max(0,(x0-h)*s),sy=Math.max(0,(y0-h*0.45)*s),ex=Math.min(F.width,(x1+h*2)*s),ey=Math.min(F.height,(y1+h*0.45)*s);
+  if(ex-sx<10||ey-sy<6)continue;const u=Math.max(1,Math.min(3,90/(h*s)));parts.push([sx,sy,ex-sx,ey-sy,u])}
+ if(!parts.length){F.width=0;F.height=0;return null}
+ let W=0,H=30;parts.forEach(q=>{W=Math.max(W,q[2]*q[4]);H+=q[3]*q[4]+40});
+ const k=Math.min(1,2400/W,6000/H),cv=document.createElement('canvas');cv.width=Math.round(W*k)+40;cv.height=Math.round(H*k);
+ const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,cv.width,cv.height);let y=20;
+ for(const q of parts){const w=q[2]*q[4]*k,h=q[3]*q[4]*k;c.drawImage(F,q[0],q[1],q[2],q[3],20,y,w,h);y+=h+40*k}
+ F.width=0;F.height=0;return cv;
+}
+async function mlScan(im,key){
+ const tm=[Date.now()];ocrNote='Đang đọc chữ bằng AI';const st=$('#ocr-st');if(st)st.textContent=ocrNote;
+ mlLoad(mkRot(im,0,2000));
+ let best=null;const order=[mlLastRot,0,180,90,270].filter((x,i,a)=>a.indexOf(x)===i);
+ for(const rot of order){const o=await mlRun(rot);const sc=mlScore(o.text);if(!best||sc>best.sc)best={rot,sc,text:o.text||''};if(sc>=ML_OK)break}
+ tm.push(Date.now());
+ const P=[parseOcrText(best.text,key)],raw=[best.text];
+ /* ảnh dựng thẳng ngay trong app để biết vị trí từng dòng */
+ let R=best.rot,up=null,W2=0;
+ for(const r of [best.rot,(360-best.rot)%360].filter((x,i,a)=>a.indexOf(x)===i)){const cv=mkRot(im,r,2400);const w2=cv.width;mlLoad(cv);const o=await mlRun(0);const sc=mlScore(o.text);if(sc>=ML_OK||sc>=best.sc*0.6){R=r;up=o;W2=w2;break}}
+ if(up){P.push(parseOcrText(up.text,key));raw.push(up.text||'');
+  const cv=mlStrips(im,R,up.lines||[],W2);
+  if(cv){mlLoad(cv);const o=await mlRun(0);const pc=parseOcrText(o.text,key);pc.nums.forEach(x=>{x.sc+=1});P.push(pc);raw.push('[dòng phóng to]\n'+(o.text||''))}
+ }
+ tm.push(Date.now());let res=combineOcr(P,key);
+ { /* luôn đọc thêm một lượt ảnh lọc nền vàng và dấu đỏ: nhiều lượt bỏ phiếu thì kết quả ổn định hơn giữa các lần quét */
+  mlLoad(mkRot(im,0,2000,'r'));const o=await mlRun(best.rot);P.push(parseOcrText(o.text,key));raw.push(o.text||'');res=combineOcr(P,key);tm.push(Date.now());
+ }
+ try{window.CrewOCR.free()}catch(e){}
+ if(best.sc>=ML_OK){mlLastRot=best.rot;try{localStorage.setItem('crewjob.mlrot',best.rot)}catch(e){}}
+ res.tm=tm.slice(1).map((x,i)=>x-tm[i]);res.raw=raw.join('\n-----\n');return res;
+}
+/* Quét ảnh: ảnh chỉ nằm trong canvas tạm, đọc xong là hủy. Không lưu, không gửi đi. */
+async function scanFile(file){
+ const n=state.newDoc,key=n.key;n.scan='busy';n.derived='';n.capFound=0;ocrNote='Đang chuẩn bị';render();
+ let url=null;const t0=Date.now();
+ try{
+  url=URL.createObjectURL(file);const im=await loadImg(url);
+  let r=null;n.engine='';
+  if(mlHas()){try{r=await mlScan(im,key);n.engine='AI ML Kit';n.tm=r.tm;if(!r.number&&!r.issue&&!r.expiry)r=null}catch(e){r=null;n.mlErr=String(e&&e.message||e).slice(0,80)}}
+  if(!r){n.engine='bộ đọc dự phòng';r=await ocrRun(async w=>{
+   const kill=cv=>{cv.width=0;cv.height=0};
+   await w.setParameters({tessedit_pageseg_mode:'11'});
+   /* 1. Nhận hướng ảnh: đọc thử vùng giữa ảnh nhỏ, đúng hướng là dừng */
+   ocrNote='Đang nhận hướng ảnh';let best=0,bs=-1;const tm=[Date.now()];
+   const order=[ocrLastRot,0,180,270,90].filter((x,i,a)=>a.indexOf(x)===i);
+   for(const rot of order){const cv=mkRot(im,rot,1200),W=cv.width,H=cv.height;const q=await w.recognize(cv,{rectangle:{left:Math.round(W*.2),top:Math.round(H*.2),width:Math.round(W*.6),height:Math.round(H*.6)}},{blocks:true});kill(cv);const sc=wordScore(q);if(sc>bs){bs=sc;best=rot}if(sc>=ORI_OK)break}
+   tm.push(Date.now());ocrLastRot=best;try{localStorage.setItem('crewjob.rot',best)}catch(e){}
+   /* 2. Đọc chữ: tối đa 3 lượt, đủ thông tin là dừng */
+   const P=[],TR=[],plan=[['r','11'],['','11']];let res=null;
+   for(let k=0;k<plan.length;k++){
+    ocrNote=k?'Đang đọc lại cho chắc':'Đang đọc chữ';
+    if(k)await w.setParameters({tessedit_pageseg_mode:plan[k][1]});
+    const cv=mkRot(im,best,1800,plan[k][0]);const q=await w.recognize(cv,{},{text:true});kill(cv);
+    tm.push(Date.now());P.push(parseOcrText(q.data.text,key));TR.push(q.data.text);res=combineOcr(P,key);res.raw=TR.join('\n-----\n');
+    if(ocrDone(res,key,true)||tm[tm.length-1]-tm[tm.length-2]>6500)break; /* giấy dày chữ đọc chậm: không đọc lượt 2 */
+   }
+   n.tm=tm.slice(1).map((x,i)=>x-tm[i]);return res;
+  },m=>{const e=$('#ocr-st');if(e)e.textContent=ocrNote+' '+(m.status==='recognizing text'?Math.round((m.progress||0)*100)+'%':(STAGE_VN[m.status]||''))})}
+  if(state.newDoc!==n)return;
+  n.raw=r.raw||'';n.kept=[];
+  if(key==='COC'){const c=ocrCap(n.raw);if(c){n.cap=c;n.capFound=1}}
+  if(!CERT[key].noNum){if(r.number)n.number=r.number;else if(n.number)n.kept.push('số giấy tờ')}
+  if(r.issue)n.issue=r.issue;else if(n.issue)n.kept.push(key==='MEDICAL'?'ngày khám':'ngày cấp');
+  if(!CERT[key].noExpiry){if(r.expiry)n.expiry=r.expiry;else if(n.expiry)n.kept.push('ngày hết hạn')}
+  n.derived=r.derived||'';n.secs=Math.round((Date.now()-t0)/100)/10;
+  n.found=[key==='COC'&&n.capFound&&'chức danh',!CERT[key].noNum&&r.number&&'số giấy tờ',r.issue&&r.derived!=='issue'&&(key==='MEDICAL'?'ngày khám':'ngày cấp'),r.expiry&&r.derived!=='expiry'&&!CERT[key].noExpiry&&'ngày hết hạn'].filter(Boolean);
+  n.scan=n.found.length?'ok':'none';
+ }catch(e){n.scan='fail';n.err=String(e&&e.stage||'')+': '+String(e&&e.message||e).slice(0,80)}
+ finally{if(url)URL.revokeObjectURL(url)}
+ if(state.addStep==='photo')render();
+}
+function profilePct(){
+ const req=certsFor(state.me.rank,state.me.ship);
+ const ok=req.filter(k=>{const d=state.docs.find(x=>x.key===k);if(!d)return false;if(k==='COC'&&!cocFits(d.cap,state.me.rank))return false;return !d.expiry||diffDays(d.expiry,isoToday)>=0});
+ return{pct:Math.round(ok.length/req.length*100),missing:req.filter(k=>!ok.includes(k))};
+}
+function matchedJobs(){
+ const m=state.me;
+ return state.jobs.filter(j=>j.status==='approved'&&j.rank===m.rank&&smaxM(j)>=m.salMin&&jLive(j)&&(!j.joinDate||diffDays(j.joinDate,m.avail)>=0)).sort((a,b)=>smaxUsd(b)-smaxUsd(a));
+}
+function homeView(){
+ const m=state.me,r=rk(m.rank),pp=profilePct(),first=m.name.trim().split(/\s+/).pop();
+ const mj=matchedJobs();
+ let h='';
+ h+='<section class="hero"><div class="hero-l">Hồ sơ thuyền viên</div><div class="hero-t">'+esc(r.abbr)+' · '+esc(r.name)+'</div><div><div class="hero-r"><span>Hồ sơ hoàn thiện</span><b>'+pp.pct+'%</b></div><div class="prog" role="progressbar" aria-label="Hồ sơ hoàn thiện" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pp.pct+'"><i style="width:'+pp.pct+'%"></i></div></div>'+
+  '<div class="hero-n">'+(pp.missing.length?'Cần bổ sung hoặc gia hạn: '+pp.missing.map(k=>esc(CERT[k].short)).join(', '):'Đã đủ giấy tờ bắt buộc cho chức danh này')+'</div></section>';
+ h+='<div class="stats"><button class="stat" data-a="tab" data-v="docs"><span class="n">'+state.docs.length+'</span><span class="l">Giấy tờ</span></button><button class="stat" data-a="goJobs"><span class="n">'+mj.length+'</span><span class="l">Việc làm phù hợp</span></button></div>';
+ return h;
+}
+const ADMIN_ZALO='84349714721';
+const canRenew=x=>!!x.expiry&&within11(x.expiry)&&!CERT[x.key].noRenew;
+function renewMsg(ids){
+ const m=state.me,L=state.docs.filter(d=>ids.includes(d.id)).map((d,i)=>(i+1)+'. '+docName(d)+' – hết hạn '+fmtDate(d.expiry));
+ return'Chào anh, em là '+m.name+' ('+rk(m.rank).abbr+'). Em muốn gia hạn các giấy tờ sau:\n'+L.join('\n')+'\nAnh báo giúp em chi phí và thời gian xử lý ạ.';
+}
+const zaloBtn=(ids,label)=>'<a class="btn accent" href="https://zalo.me/'+ADMIN_ZALO+'" target="_blank" rel="noopener" data-a="zaloCopy" data-v="'+ids.join(',')+'">'+label+'</a>';
+function docsView(){
+ if(state.addStep==='pick')return pickView();
+ if(state.addStep==='photo')return photoView();
+ const can=state.docs.some(canRenew);
+ let h='<div class="row between"><h1 class="sec-title">Giấy tờ</h1><div class="row"><button class="btn accent sm" data-a="addDoc">Thêm giấy tờ</button>'+(can&&!state.bulk?'<button class="btn ghost sm" data-a="bulkOn">Gia hạn nhiều giấy tờ</button>':'')+'</div></div>';
+ if(state.bulk){const n=state.bulk.length;h+='<div class="notice"><b>Chọn các giấy tờ cần gia hạn</b><span class="sub">Chỉ giấy tờ sắp hết hạn trong 11 tháng mới chọn được. Giấy khám sức khỏe và giấy tiêm sốt vàng không gia hạn được.</span><div class="row">'+(n?zaloBtn(state.bulk,'Nhắn Zalo gia hạn ('+n+' giấy tờ)'):'<button class="btn" disabled>Chưa chọn giấy tờ nào</button>')+'<button class="btn ghost" data-a="bulkOff">Hủy</button></div></div>'}
+ return h+docsList();
+}
+function pickView(){
+ const groups={};Object.keys(CERT).forEach(k=>{(groups[CERT[k].g]=groups[CERT[k].g]||[]).push(k)});
+ let h='<div class="row between"><h1 class="sec-title">Chọn loại giấy tờ</h1><button class="btn ghost sm" data-a="cancelAdd">Đóng</button></div>';
+ Object.keys(groups).forEach(g=>{h+='<div class="lbl">'+esc(g)+'</div><div class="pick">'+groups[g].map(k=>'<button class="pickrow" data-a="pickType" data-v="'+k+'"><span class="pi">'+IC.file+'</span><span class="pn">'+esc(CERT[k].name)+'</span>'+(CERT[k].isNew?'<span class="pill soon plain">Mới 2026</span>':'')+(k!=='OTHER'&&state.docs.some(d=>d.key===k)?'<span class="pill ok plain">Đã thêm</span>':'')+'<span class="chev">›</span></button>').join('')+'</div>'});
+ h+='<p class="safe">Danh mục và quy định chỉ mang tính tham khảo. Hãy đối chiếu với cơ quan cấp hoặc công ty của bạn.</p>';
+ return h;
+}
+function photoView(){
+ const n=state.newDoc,k=n.key,T=CERT[k],have=k==='OTHER'?null:state.docs.find(d=>d.key===k),busy=n.scan==='busy';
+ let h='<div class="row between"><h1 class="sec-title" style="font-size:22px;min-width:0">'+esc(T.name)+'</h1><button class="btn ghost sm" data-a="backPick">Đổi loại</button></div>';
+ h+='<section class="card stack"><p class="sub">Chụp hoặc chọn ảnh giấy tờ, app đọc số, ngày cấp và ngày hết hạn ngay trên máy bạn rồi bỏ ảnh. <b>Ảnh không được lưu và không gửi đi đâu.</b> Bạn cũng có thể nhập tay.</p>'+
+  (T.valid?'<p class="sub"><b>Quy định:</b> '+esc(T.valid)+'</p>':'');
+ if(busy)h+='<div class="notice"><b>Đang đọc ảnh trên máy bạn…</b><span class="sub" id="ocr-st">Đang chuẩn bị 0%</span><span class="sub">Lần đầu có thể mất vài chục giây. Nếu quá lâu, app tự báo lỗi để bạn nhập tay.</span></div>';
+ else h+='<label class="btn accent full">'+IC.cam+'Quét bằng camera<input type="file" id="nd-cam" class="filein" accept="image/*" capture="environment"></label><label class="btn ghost full">Chọn ảnh từ thư viện<input type="file" id="nd-gal" class="filein" accept="image/*"></label>';
+ if(n.scan==='ok')h+='<div class="notice"><b>Đã đọc: '+n.found.join(', ')+(n.secs!=null?' ('+n.secs+' giây'+(n.engine?', '+n.engine:'')+')':'')+'.</b><span class="sub">Hãy kiểm tra lại cho đúng trước khi lưu. Ảnh đã được bỏ.</span></div>';
+ if(n.scan==='ok'||n.scan==='none'){if(n.kept&&n.kept.length)h+='<div class="notice"><b>Ảnh chưa đọc được '+n.kept.join(', ')+'</b><span class="sub">Ô này đang giữ thông tin của bản đã lưu trước đó, không phải từ ảnh vừa quét. Hãy đối chiếu với giấy.</span></div>';
+  if(n.raw)h+='<details class="sub"><summary>Xem chữ app đọc được từ ảnh</summary><pre style="white-space:pre-wrap;font-size:12px;max-height:240px;overflow:auto">'+esc(n.raw)+'</pre></details>'}
+ if(n.derived)h+='<div class="notice"><b>'+(n.derived==='expiry'?'Ngày hết hạn':'Ngày cấp')+' được tính tự động</b><span class="sub">Ảnh chỉ rõ '+(n.derived==='expiry'?'ngày cấp':'ngày hết hạn')+'. App tính theo quy tắc hết hạn cùng ngày, cùng tháng với ngày cấp, thời hạn '+(OCR_VALID[n.key]||5)+' năm. Hãy đối chiếu với giấy.</span></div>';
+ if(n.scan==='none')h+='<div class="notice"><b>Không đọc được thông tin trong ảnh.</b><span class="sub">Chụp rõ, đủ sáng, không lóa, hoặc nhập tay bên dưới.</span></div>';
+ if(n.scan==='fail')h+='<div class="notice"><b>Không đọc được ảnh.</b><span class="sub">Bạn nhập tay bên dưới. (Chi tiết: '+esc(n.err||'')+')</span></div>';
+ if(have)h+='<p class="sub">Bạn đã có giấy tờ này. Lưu sẽ thay thế bản cũ.</p>';
+ h+='</section>';
+ if(!busy){
+  h+='<form class="card form" data-f="doc">';
+  if(k==='COC')h+='<div class="field full"><label for="nd-cap">Chức danh ghi trên bằng</label><select id="nd-cap" name="cap" required><option value="">Chọn chức danh</option>'+selOpts(COC_CAP.map(c=>[c[0],c[1]]),n.cap)+'</select><span class="sub">App dùng mục này để kiểm tra bạn đủ điều kiện cho từng tin tuyển dụng. Chỉ có một ô COC, hãy chọn bằng cao nhất của bạn.</span></div>';
+  if(k==='OTHER')h+='<div class="field full"><label for="nd-title">Tên giấy tờ</label><input type="text" id="nd-title" name="title" value="'+esc(n.title||'')+'" required></div>';
+  if(!T.noNum)h+='<div class="field full"><label for="nd-num">Số giấy tờ</label><input type="text" id="nd-num" name="number" value="'+esc(n.number||'')+'" autocomplete="off" autocapitalize="characters"></div>';
+  h+='<div class="field"><label for="nd-iss">'+(k==='MEDICAL'?'Ngày khám':'Ngày cấp')+'</label>'+dateInp('nd-iss','issue',n.issue,false)+'</div>';
+  if(T.noExpiry)h+='<p class="full sub">Giấy tờ này không có ngày hết hạn.</p>';
+  else h+='<div class="field"><label for="nd-exp">Ngày hết hạn</label>'+dateInp('nd-exp','expiry',n.expiry,true)+'</div>';
+  h+='<p class="full sub">'+(T.noNum?'Thông tin':'Số giấy tờ')+' chỉ lưu trên máy bạn và không hiện với nhà tuyển dụng.</p><div class="full row"><button class="btn accent" type="submit">Lưu giấy tờ</button><button class="btn ghost" type="button" data-a="cancelAdd">Hủy</button></div></form>';
+ }else h+='<button class="btn ghost" data-a="cancelAdd">Hủy</button>';
+ return h;
+}
+const minQuote=k=>{const Q=state.quotes.filter(q=>q.key===k).sort((a,b)=>a.price-b.price);return Q[0]||null};
+function nameParts(x){const f=docName(x),i=f.indexOf(' (');return i>0?[f.slice(0,i),f.slice(i+2,-1)]:[f,'']}
+function docCard(x){
+ const st=docStatus(x.expiry),can=canRenew(x),open=state.docOpen===x.id,np=nameParts(x),ci=x.cap?capInfo(x.cap):null;
+ const right=x.expiry?st.label:'Vô thời hạn';
+ const pq=can?minQuote(x.key):null;
+ const inner='<span class="dot"></span><span class="dt"><b>'+esc(np[0])+'</b>'+(np[1]?'<span>'+esc(np[1])+'</span>':'')+(can?'<span class="dprice">'+(pq?'Gia hạn từ '+vnd(pq.price):'Chưa có báo giá')+'</span>':'')+'</span><span class="dd">'+esc(right)+'</span>';
+ let h='<article class="drow '+st.k+'">';
+ if(state.bulk&&can)h+='<label class="drow-top"><input type="checkbox" data-a="bulkSel" data-v="'+x.id+'"'+(state.bulk.includes(x.id)?' checked':'')+'>'+inner+'</label>';
+ else h+='<button class="drow-top" data-a="docOpen" data-v="'+x.id+'" aria-expanded="'+open+'">'+inner+'</button>';
+ if(open&&!state.bulk){
+  h+='<div class="drow-more"><div class="sub">'+(x.number?'Số <span class="mono">'+esc(x.number)+'</span> · ':'')+(x.issue?'Cấp <span class="mono">'+fmtDate(x.issue)+'</span> · ':'')+(x.expiry?'Hết hạn <span class="mono">'+fmtDate(x.expiry)+'</span>':'Không có ngày hết hạn')+(ci?' · Chức danh trên bằng: '+esc(ci[1]):'')+'</div>';
+  h+='<div class="row">'+(can?'<button class="btn accent sm" data-a="renew" data-v="'+x.id+'" aria-expanded="'+(state.renewOpen===x.id)+'">Gia hạn</button>':'')+'<button class="btn ghost sm" data-a="pickType" data-v="'+x.key+'">'+'Update chứng chỉ'+'</button><button class="btn '+(state.delArm===x.id?'danger ':'ghost ')+'sm" data-a="delDoc" data-v="'+x.id+'">'+(state.delArm===x.id?'Bấm lần nữa để xóa':'Xóa')+'</button></div>';
+  if(can&&state.renewOpen===x.id){const Q=state.quotes.filter(q=>q.key===x.key);h+='<div class="stack"><div class="lbl">Giá gia hạn</div>'+(Q.length?Q.map(q=>quoteCard(q,true)).join(''):'<div class="empty">Chưa có báo giá cho giấy tờ này.</div>')+'<div class="row">'+zaloBtn([x.id],'Nhắn Zalo để gia hạn')+'</div><span class="sub">Bấm nút, nội dung yêu cầu được sao chép sẵn, bạn chỉ cần dán vào Zalo.</span></div>'}
+  h+='</div>';
+ }
+ return h+'</article>';
+}
+function docsList(){
+ const all=state.docs.slice().sort((a,b)=>daysLeft(a)-daysLeft(b));
+ if(!all.length)return'<div class="empty">Chưa có giấy tờ nào. Bấm “Thêm giấy tờ” và quét giấy tờ đầu tiên.</div>';
+ const need=all.filter(x=>x.expiry&&within11(x.expiry)),ok=all.filter(x=>!need.includes(x));
+ let h='';
+ if(need.length)h+='<div class="dgrp">Cần xử lý ('+need.length+')</div><div class="docs">'+need.map(docCard).join('')+'</div>';
+ if(ok.length)h+='<div class="dgrp">Còn hạn ('+ok.length+')</div><div class="docs">'+ok.map(docCard).join('')+'</div>';
+ return h;
+}
+function quoteCard(q,forUser){
+ return'<article class="quote"><div style="min-width:0"><h3 style="font-size:16px;font-weight:600">'+esc(CERT[q.key]?CERT[q.key].name:q.key)+'</h3></div><div class="price">'+vnd(q.price)+'</div>'+
+  '<div class="full safe">Giá tham khảo, không phải lệ phí nhà nước. Hãy xác nhận lại trước khi trả tiền.</div></article>';
+}
+
+/* ---------- views: seafarer / me ---------- */
+function profileRows(){
+ const m=state.me,r=rk(m.rank);
+ const rows=[['Chức danh',r.abbr+' · '+r.name],['Loại tàu',m.ship],['Kinh nghiệm',m.years+' năm'],['Mức lương mong muốn','$'+usd(m.salMin)+' – $'+usd(m.salMax)],['Có thể nhận tàu',fmtDate(m.avail)]];
+ return'<dl class="prof">'+rows.map(x=>'<div><dt>'+esc(x[0])+'</dt><dd>'+esc(x[1])+'</dd></div>').join('')+'</dl>';
+}
+function profileForm(){
+ const m=state.me;
+ return'<form class="card form" data-f="profile"><div class="field full"><label for="pf-name">Họ và tên</label><input type="text" id="pf-name" name="name" value="'+esc(m.name)+'" required></div>'+
+  '<div class="field"><label for="pf-rank">Chức danh</label><select id="pf-rank" name="rank">'+rankOpts(m.rank)+'</select></div>'+
+  '<div class="field"><label for="pf-ship">Loại tàu</label><select id="pf-ship" name="ship">'+shipOpts(m.ship)+'</select></div>'+
+  '<div class="field"><label for="pf-yrs">Kinh nghiệm (năm)</label><input type="number" id="pf-yrs" name="years" min="0" max="50" value="'+esc(m.years)+'" required></div>'+
+  '<div class="field"><label for="pf-av">Có thể nhận tàu từ ngày</label>'+dateInp('pf-av','avail',m.avail,true)+'</div>'+
+  '<div class="field"><label for="pf-s1">Lương mong muốn từ (USD/tháng)</label><input type="number" id="pf-s1" name="salMin" min="0" value="'+esc(m.salMin)+'" required></div>'+
+  '<div class="field"><label for="pf-s2">Đến (USD/tháng)</label><input type="number" id="pf-s2" name="salMax" min="0" value="'+esc(m.salMax)+'" required></div>'+
+  '<p class="full sub">Chức danh và lương mong muốn được dùng để báo tin tuyển dụng phù hợp.</p>'+
+  '<div class="full row"><button class="btn accent" type="submit">Lưu hồ sơ</button><button class="btn ghost" type="button" data-a="cancelProfile">Hủy</button></div></form>';
+}
+function meView(){
+ const a=state.alert,best=alertJobs().filter(j=>j.postedHrs<72)[0]||alertJobs()[0];
+ let h='<h1 class="sec-title">Hồ sơ của tôi</h1>';
+ const M=state.me,R0=rk(M.rank);
+ h+='<section class="card"><div class="row" style="gap:14px;flex-wrap:nowrap">'+epa(R0)+'<div style="min-width:0"><div style="font-weight:600;font-size:18px">'+esc(M.name)+' <span class="sub">(mẫu)</span></div><div class="sub">'+esc(R0.abbr)+' · '+esc(R0.name)+'</div></div></div></section>';
+ h+=homeView();
+ h+='<h2 class="sec-title" style="font-size:21px">Thông tin nghề nghiệp</h2>';
+ if(state.editProfile)h+=profileForm();
+ else h+='<section class="card" style="padding:6px 16px">'+profileRows()+'</section><div class="stack"><button class="btn full" data-a="editProfile">Chỉnh sửa hồ sơ</button></div>';
+ h+='<section class="card" style="display:flex;flex-direction:column;gap:12px"><div class="row between"><h2 class="sec-title" style="font-size:19px">Thông báo tin phù hợp</h2>'+(state.pro?'':'<span class="pill plain" style="--c:var(--accent)">Pro</span>')+'</div>';
+ if(state.pro){
+  h+='<label class="switch"><input type="checkbox" id="al-on" data-c="alOn"'+(a.on?' checked':'')+'> Báo tôi khi có tin khớp</label>'+
+   '<div class="filters"><div class="field"><label for="al-rank">Chức danh</label><select id="al-rank" data-c="alRank">'+rankOpts(a.rank)+'</select></div>'+
+   '<div class="field"><label for="al-min">Lương từ</label><select id="al-min" data-c="alMin">'+selOpts([[1500,'1,500 USD'],[3000,'3,000 USD'],[5000,'5,000 USD'],[5500,'5,500 USD'],[7000,'7,000 USD']],a.minSalary)+'</select></div>'+
+   '<div class="field"><label for="al-in">Nhập tàu trong</label><select id="al-in" data-c="alIn">'+selOpts([[30,'30 ngày'],[60,'60 ngày'],[90,'90 ngày'],[120,'120 ngày']],a.within)+'</select></div></div>'+
+   '<p class="sub">Hiện có <b>'+alertJobs().length+'</b> tin khớp. Tin mới sẽ gửi thông báo đẩy tới điện thoại, ví dụ:</p>';
+  if(best&&a.on){const c=co(best.companyId);h+='<div class="push">'+IC.bell+'<div><b>'+esc(rk(best.rank).abbr)+' · '+esc(best.shipType)+' · '+salLine(best)+'</b><br>Nhập tàu '+joinTxt(best)+'. '+esc(c.name)+'.</div></div>'}
+  else h+='<div class="empty">Chưa có tin khớp với điều kiện này.</div>';
+ }else h+='<p class="sub">Gói Pro báo ngay khi có tin đúng chức danh, mức lương và thời gian nhập tàu bạn chọn.</p>';
+ return h+'</section>'+privacyBlock()+'<button class="btn ghost full" data-a="switchAcct">Đổi loại tài khoản</button>';
+}
+
+/* ---------- forms shared by company / admin ---------- */
+function jobForm(ctx,v){
+ v=v||{};
+ const approved=CO.filter(c=>c.status==='approved');
+ const ow=v.owner==='vn'?'vn':'foreign',cu=v.cur==='VND'?'VND':'USD',unit=cu==='VND'?'triệu đồng':'USD';
+ const sv=n=>n?(cu==='VND'?n/1e6:n):'';
+ let h='<form class="card form" data-f="job-'+ctx+'">'+
+  '<div class="field"><label for="'+ctx+'-rank">Chức danh</label><select id="'+ctx+'-rank" name="rank" required><option value="">Chọn chức danh</option>'+rankOpts(v.rank||'')+'</select></div>'+
+  '<div class="field"><label for="'+ctx+'-ship">Loại tàu'+(ctx==='ad'?' (không bắt buộc)':'')+'</label><select id="'+ctx+'-ship" name="shipType"'+(ctx!=='ad'?' required':'')+'><option value="">Chọn loại tàu</option>'+shipOpts(v.shipType||'')+'</select></div>'+
+  '<div class="field"><label for="'+ctx+'-own">Chủ tàu</label><select id="'+ctx+'-own" name="owner">'+selOpts([['foreign','Nước ngoài'],['vn','Việt Nam']],ow)+'</select></div>'+
+  '<div class="field"><label for="'+ctx+'-cur">Đơn vị lương</label><select id="'+ctx+'-cur" name="cur">'+selOpts([['USD','USD'],['VND','VND (triệu đồng)']],cu)+'</select></div>'+
+  '<div class="field"><label for="'+ctx+'-jd">Ngày nhập tàu dự kiến'+(ctx==='ad'?' (không bắt buộc)':'')+'</label>'+dateInp(ctx+'-jd','joinDate',v.joinDate,ctx!=='ad')+'</div>'+
+  '<div class="field"><label for="'+ctx+'-ct">Liên hệ (điện thoại hoặc Zalo)</label><input type="text" id="'+ctx+'-ct" name="contact" value="'+esc(v.contact||(ctx==='co'?CO[0].contact:''))+'" required></div>'+
+  '<div class="field"><label for="'+ctx+'-s1" data-sl="Lương thấp nhất">Lương thấp nhất ('+unit+'/tháng)</label><input type="number" step="any" id="'+ctx+'-s1" name="salaryMin" min="0" value="'+esc(sv(v.salaryMin))+'" required></div>'+
+  '<div class="field"><label for="'+ctx+'-s2" data-sl="Lương cao nhất">Lương cao nhất ('+unit+'/tháng)</label><input type="number" step="any" id="'+ctx+'-s2" name="salaryMax" min="0" value="'+esc(sv(v.salaryMax))+'" required></div>'+
+  (ctx==='ad'?'<div class="field full"><label for="ad-co">Công ty</label><select id="ad-co" name="companyId">'+selOpts([['cx','Tin thu thập từ cộng đồng']],'cx')+'</select></div>':'')+
+  '<details class="full more"'+((v.vessel||v.dwt||v.flag||v.route||v.months)?' open':'')+'><summary>Thêm thông tin (không bắt buộc)</summary><div class="form" style="margin-top:10px">'+
+  '<div class="field"><label for="'+ctx+'-ves">Tên tàu</label><input type="text" id="'+ctx+'-ves" name="vessel" value="'+esc(v.vessel||'')+'"></div>'+
+  '<div class="field"><label for="'+ctx+'-dwt">Trọng tải</label><input type="text" id="'+ctx+'-dwt" name="dwt" value="'+esc(v.dwt||'')+'" placeholder="vd 50.000 DWT"></div>'+
+  '<div class="field"><label for="'+ctx+'-flag">Cờ</label><input type="text" id="'+ctx+'-flag" name="flag" value="'+esc(v.flag||'')+'"></div>'+
+  '<div class="field"><label for="'+ctx+'-route">Tuyến chạy</label><input type="text" id="'+ctx+'-route" name="route" value="'+esc(v.route||'')+'"></div>'+
+  '<div class="field"><label for="'+ctx+'-mo">Hợp đồng (tháng)</label><input type="number" id="'+ctx+'-mo" name="months" min="1" max="18" value="'+esc(v.months||'')+'"></div></div></details>';
+ h+='<p class="full sub">Giấy tờ yêu cầu do app tự gắn theo chức danh và loại tàu.</p>';
+ if(ctx==='ad')h+='<label class="full checks" style="display:flex"><span style="display:flex;gap:8px;font-size:14px"><input type="checkbox" name="consent" required style="accent-color:var(--accent)">Tôi đã kiểm tra tin này và đồng ý đăng</span></label>';
+ h+='<div class="full row"><button class="btn accent" type="submit">Đăng tin</button>'+(ctx==='co'?'<span class="sub">Tin hiện ngay cho thuyền viên và tự ẩn khi quá ngày nhập tàu.</span>':'')+'</div></form>';
+ return h;
+}
+const ST={approved:['ok','Đang hiển thị'],pending:['warn','Chờ duyệt'],rejected:['bad','Bị từ chối'],closed:['plain','Đã đóng'],removed:['bad','Đã gỡ']};
+function jobLine(j,actions){
+ const r=rk(j.rank),s=ST[j.status]||ST.pending;
+ return'<article class="item"><div class="row between" style="align-items:flex-start"><div class="row" style="gap:12px;flex-wrap:nowrap">'+epa(r)+'<div style="min-width:0"><div class="job-rank" style="font-size:22px">'+esc(r.abbr)+' <small>'+esc(j.shipType)+'</small></div><div class="sub">Nhập tàu <span class="mono">'+joinTxt(j)+'</span> · '+(j.months?j.months+' tháng · ':'')+salLine(j)+'</div><div class="sub">'+esc(co(j.companyId).name)+' · Chủ tàu '+ownerLabel(j.owner)+(j.source==='admin'?' · admin nhập':'')+'</div></div></div><span class="pill '+s[0]+'">'+s[1]+'</span></div>'+(actions?'<div class="row">'+actions+'</div>':'')+'</article>';
+}
+
+/* ---------- messages ---------- */
+function getThread(jid,cid,create){
+ let t=state.threads.find(x=>x.jobId===jid&&x.candId===cid);
+ if(!t&&create){t={id:'t'+Date.now()+Math.random().toString(36).slice(2,5),jobId:jid,candId:cid,uCo:0,uSea:0,msgs:[]};state.threads.push(t)}
+ return t;
+}
+const lastMsg=t=>t&&t.msgs.length?t.msgs[t.msgs.length-1]:null;
+function agoTs(ts){const m=Math.round((Date.now()-ts)/MIN);return m<1?'vừa xong':m<60?m+' phút trước':m<1440?Math.floor(m/60)+' giờ trước':Math.floor(m/1440)+' ngày trước'}
+function candInfo(id){
+ if(id==='me'){const m=state.me;return{id:id,name:m.name,rank:m.rank,years:m.years,pct:profilePct().pct}}
+ return CANDS.find(c=>c.id===id)||{id:id,name:'Ứng viên',rank:'AB',years:0,pct:0};
+}
+function candIds(jid){
+ const s=new Set();
+ state.apps.filter(a=>a.jobId===jid).forEach(a=>s.add(a.candId));
+ state.threads.filter(t=>t.jobId===jid).forEach(t=>s.add(t.candId));
+ return Array.from(s).filter(c=>state.blocked.indexOf('cand:'+c)<0);
+}
+function candAttn(jid,cid){
+ const a=state.apps.find(x=>x.jobId===jid&&x.candId===cid),t=getThread(jid,cid);
+ return{isNew:!!(a&&!a.seen),unread:t?t.uCo:0};
+}
+const attnCount=jid=>candIds(jid).filter(c=>{const x=candAttn(jid,c);return x.isNew||x.unread>0}).length;
+const unreadSea=()=>state.threads.filter(t=>t.candId==='me').reduce((n,t)=>n+t.uSea,0);
+function sendMsg(jid,cid,from,text){
+ const t=getThread(jid,cid,true);
+ t.msgs.push({f:from,text:text,ts:Date.now()});
+ if(from==='cand')t.uCo++;else t.uSea++;
+}
+function msgRow(jid,cid){
+ const j=state.jobs.find(x=>x.id===jid);if(!j)return'';
+ const t=getThread(jid,cid),lm=lastMsg(t),sea=state.role==='sea',r=rk(j.rank),ci=candInfo(cid),a=state.apps.find(x=>x.jobId===jid&&x.candId===cid);
+ const unread=t?(sea?t.uSea:t.uCo):0,isNew=!sea&&a&&!a.seen;
+ const title=sea?esc(r.abbr)+' · '+esc(j.shipType):esc(ci.name);
+ const subl=sea?esc(co(j.companyId).name)+' · Chủ tàu '+ownerLabel(j.owner):esc(rk(ci.rank).abbr)+' · '+ci.years+' năm · Hồ sơ '+ci.pct+'%';
+ const snip=lm?(((sea&&lm.f==='cand')||(!sea&&lm.f==='co'))?'Bạn: ':'')+esc(lm.text):(a?'Đã gửi hồ sơ, chưa nhắn tin':'Chưa có tin nhắn');
+ return'<button class="cand" data-a="openThread" data-v="'+jid+'|'+cid+'">'+epa(sea?r:rk(ci.rank))+'<span class="cm"><b>'+title+'</b><span class="sub">'+subl+'</span><span class="sub msg">'+snip+'</span></span><span class="cr">'+(isNew?'<span class="pill ok">Hồ sơ mới</span>':'')+(unread?'<span class="badge">'+unread+'</span>':'')+(lm?'<span class="sub">'+agoTs(lm.ts)+'</span>':'')+'</span></button>';
+}
+function msgsView(){
+ const L=state.threads.filter(t=>t.candId==='me'&&state.jobs.some(j=>j.id===t.jobId&&!isBlockedCo(j.companyId))).sort((a,b)=>((lastMsg(b)||{ts:0}).ts)-((lastMsg(a)||{ts:0}).ts));
+ let h='<h1 class="sec-title">Tin nhắn</h1><p class="sub">Mỗi tin tuyển dụng có một cuộc trò chuyện riêng với nhà tuyển dụng.</p>';
+ h+=L.length?'<div class="list">'+L.map(t=>msgRow(t.jobId,'me')).join('')+'</div>':'<div class="empty">Chưa có cuộc trò chuyện nào. Mở một tin tuyển dụng và bấm “Nhắn tin cho nhà tuyển dụng”.</div>';
+ return h;
+}
+function candProfile(cid){
+ const ci=candInfo(cid);
+ if(cid==='me'&&!state.share)return'<section class="card stack"><div class="lbl">Hồ sơ giấy tờ của ứng viên</div><div class="sub">Ứng viên chưa cho phép xem danh sách giấy tờ. Bạn có thể nhắn tin đề nghị họ gửi trực tiếp.</div></section>';
+ if(cid==='me'){
+  return'<section class="card stack"><div class="lbl">Hồ sơ giấy tờ của ứng viên</div>'+(state.docs.length?'<ul class="req">'+state.docs.slice().sort((a,b)=>daysLeft(a)-daysLeft(b)).map(d=>{const st=docStatus(d.expiry);return'<li><span>'+esc(nameParts(d)[0])+'</span><span class="pill '+st.k+'">'+esc(d.expiry?st.label:'Vô thời hạn')+'</span></li>'}).join('')+'</ul>':'<div class="sub">Chưa có giấy tờ.</div>')+'</section>';
+ }
+ return'<section class="card stack"><div class="lbl">Hồ sơ giấy tờ của ứng viên (dữ liệu mẫu)</div><div class="sub">Hồ sơ hoàn thiện '+ci.pct+'%</div></section>';
+}
+function chatView(){
+ const ch=state.chat,j=state.jobs.find(x=>x.id===ch.jobId),t=getThread(ch.jobId,ch.candId,true),sea=state.role==='sea',r=rk(j.rank),ci=candInfo(ch.candId);
+ let h='<button class="btn ghost sm" data-a="backChat" style="align-self:flex-start">‹ '+(sea?'Tin nhắn':'Ứng viên')+'</button>';
+ h+='<div class="jref">'+epa(r)+'<div style="min-width:0"><b>'+esc(r.abbr)+' · '+esc(j.shipType)+'</b><div class="sub">'+(sea?esc(co(j.companyId).name):esc(ci.name)+' · '+esc(rk(ci.rank).abbr)+' · '+ci.years+' năm kinh nghiệm')+'</div><div class="sub">Nhập tàu '+joinTxt(j)+' · '+salLine(j)+'</div></div></div>';
+ h+='<div class="row"><button class="btn ghost sm" data-a="reportOpen" data-v="'+j.id+'">Báo cáo</button><button class="btn '+(state.blockArm?'danger':'ghost')+' sm" data-a="blockUser">'+(state.blockArm?'Bấm lần nữa để chặn':'Chặn')+'</button></div>'+reportPanel(j.id);
+ if(sea)h+='<p class="safe">Cảnh báo: nhà tuyển dụng hợp lệ không được thu phí hoặc đặt cọc. Không chuyển tiền cho người lạ.</p>';
+ if(!sea)h+=candProfile(ch.candId);
+ h+='<div class="msgs" aria-live="polite">'+(t.msgs.length?t.msgs.map(m=>{const mine=sea?m.f==='cand':m.f==='co';return'<div class="bub'+(mine?' me':'')+'">'+esc(m.text)+'<small>'+agoTs(m.ts)+'</small></div>'}).join(''):'<div class="empty">Chưa có tin nhắn. Hãy viết lời chào đầu tiên.</div>')+'</div>';
+ h+='<form class="msgform" data-f="msg"><input type="text" id="msg-in" name="text" autocomplete="off" placeholder="Nhập tin nhắn" aria-label="Nội dung tin nhắn" required><button class="btn accent" type="submit">Gửi</button></form>';
+ h+='<p class="sub">Cuộc trò chuyện này chỉ thuộc tin tuyển dụng ở trên. Bản thử chưa gửi tin thật.</p>';
+ return h;
+}
+
+/* ---------- views: company ---------- */
+function appsView(){
+ const j=state.jobs.find(x=>x.id===state.coJob);
+ const ids=candIds(j.id).sort((a,b)=>{const x=candAttn(j.id,a),y=candAttn(j.id,b),px=(x.isNew||x.unread)?1:0,py=(y.isNew||y.unread)?1:0;if(px!==py)return py-px;return((lastMsg(getThread(j.id,b))||{ts:0}).ts)-((lastMsg(getThread(j.id,a))||{ts:0}).ts)});
+ let h='<button class="btn ghost sm" data-a="backApps" style="align-self:flex-start">‹ Tin của tôi</button>'+jobLine(j);
+ h+='<h2 class="sec-title" style="font-size:21px">Ứng viên ('+ids.length+')</h2>';
+ h+=ids.length?'<div class="list">'+ids.map(c=>msgRow(j.id,c)).join('')+'</div>':'<div class="empty">Chưa có ứng viên. Khi thuyền viên gửi hồ sơ hoặc nhắn tin, họ hiện ở đây.</div>';
+ h+='<p class="sub">Mỗi tin tuyển dụng có hộp tin nhắn riêng, tin nhắn của ứng viên ở tin này không lẫn sang tin khác.</p>';
+ return h;
+}
+function coInfoForm(){
+ const c=CO[0];
+ return'<form class="card form" data-f="company"><div class="field full"><label for="ci-name">Tên công ty</label><input type="text" id="ci-name" name="name" value="'+esc(c.name)+'" required></div>'+
+  '<div class="field full"><label for="ci-addr">Địa chỉ</label><input type="text" id="ci-addr" name="address" value="'+esc(c.address||'')+'" required></div>'+
+  '<div class="field"><label for="ci-city">Tỉnh / thành phố</label><input type="text" id="ci-city" name="city" value="'+esc(c.city)+'" required></div>'+
+  '<div class="field"><label for="ci-ct">Số điện thoại / Zalo</label><input type="text" id="ci-ct" name="contact" value="'+esc(c.contact)+'" required></div>'+
+  '<div class="field full"><label for="ci-per">Người liên hệ</label><input type="text" id="ci-per" name="person" value="'+esc(c.person||'')+'"></div>'+
+  '<p class="full sub">Thông tin này được điền sẵn vào mọi tin đăng. Bản thử dùng dữ liệu mẫu.</p>'+
+  '<div class="full row"><button class="btn accent" type="submit">Lưu thông tin công ty</button></div></form>';
+}
+function coView(){
+ const me=CO[0],mine=state.jobs.filter(j=>j.companyId===me.id&&j.status!=='removed'&&j.status!=='closed');
+ const hot=mine.filter(j=>attnCount(j.id)>0);
+ let h='<div class="row between"><div><h1 class="sec-title">Cổng công ty</h1><div class="sub">'+esc(me.name)+' · '+esc(me.address||me.city)+'</div><div class="sub">'+esc(me.person?me.person+' · ':'')+esc(me.contact)+'</div></div><span class="verified" style="font-size:14px">'+IC.check+'Đã xác minh</span></div>';
+ if(hot.length)h+='<div class="notice"><b>'+IC.bell+' Có ứng viên mới hoặc tin nhắn chưa đọc</b>'+hot.map(j=>'<button class="btn ghost sm" data-a="viewApps" data-v="'+j.id+'" style="text-align:left">'+esc(rk(j.rank).abbr)+' · '+esc(j.shipType)+' · '+attnCount(j.id)+' ứng viên cần xem</button>').join('')+'</div>';
+ h+='<div class="tabs" role="tablist"><button role="tab" aria-selected="'+(state.coTab==='post')+'" data-a="coTab" data-v="post">Đăng tin nhanh</button><button role="tab" aria-selected="'+(state.coTab==='mine')+'" data-a="coTab" data-v="mine">Tin của tôi ('+mine.length+')'+(hot.length?'<span class="badge">'+hot.length+'</span>':'')+'</button><button role="tab" aria-selected="'+(state.coTab==='info')+'" data-a="coTab" data-v="info">Thông tin công ty</button></div>';
+ if(state.coTab==='info'){
+  h+=coInfoForm()+privacyBlock()+'<button class="btn ghost full" data-a="switchAcct">Đổi loại tài khoản</button>';
+ }else if(state.coTab==='post'){
+  const q=state.qp;
+  h+='<section class="card quick"><label for="qp-line"><b>Đăng tin nhanh bằng AI</b></label><textarea id="qp-line" rows="4" style="min-height:96px" placeholder="Dán nội dung tin tuyển dụng, hoặc gõ ngắn: C/O tàu dầu, nhập tàu 15/11, lương 6500-7000 USD, LH 0900 123 401" autocomplete="off">'+esc(q?q.raw:'')+'</textarea><div class="qp" style="align-items:center"><label class="btn ghost" for="qp-file" style="cursor:pointer">Đính kèm ảnh</label><input type="file" id="qp-file" accept="image/*" hidden><span class="sub" id="qp-fname">'+(QPIMG?'Đã chọn 1 ảnh':'')+'</span><button class="btn accent" data-a="qpParse" id="qp-go">Tách thông tin</button></div><p class="sub">Dán chữ hoặc chụp ảnh bài tuyển dụng. AI tách từng chức danh và điền sẵn, bạn kiểm tra lại rồi đăng. Nếu AI chưa dùng được, app tách bằng quy tắc đơn giản.</p></section>';
+  if(q){
+   h+='<div class="notice">'+(q.repost?'<b>Tin cũ đã điền sẵn.</b> Chọn ngày nhập tàu mới rồi đăng.':(q.miss.length?'<b>Chưa tách được: '+q.miss.join(', ')+'.</b> Điền thêm vào ô bên dưới.':'<b>Đã tách đủ thông tin.</b> Kiểm tra lại rồi đăng.'))+(q.total>1?'<span class="sub">AI tách được '+q.total+' chức danh. Đăng xong tin này, app tự mở tin tiếp theo.'+(q.checks?' Lưu ý: '+esc(q.checks):'')+'</span>':(q.checks?'<span class="sub">Lưu ý: '+esc(q.checks)+'</span>':''))+'<button class="btn ghost sm" data-a="qpClear" style="align-self:flex-start">Nhập lại</button></div>'+jobForm('co',q.v);
+  }else h+='<details class="card more"><summary>Hoặc nhập từng mục</summary><div style="margin-top:10px">'+jobForm('co',{})+'</div></details>';
+ }else h+='<div class="list">'+(mine.length?mine.map(j=>{const n=candIds(j.id).length,a=attnCount(j.id);return jobLine(j,'<button class="btn sm" data-a="viewApps" data-v="'+j.id+'">Ứng viên ('+n+')'+(a?'<span class="badge">'+a+'</span>':'')+'</button><button class="btn accent sm" data-a="repost" data-v="'+j.id+'">Đăng lại</button>'+'<button class="btn '+(state.delJob===j.id?'danger ':'ghost ')+'sm" data-a="deleteJob" data-v="'+j.id+'">'+(state.delJob===j.id?'Bấm lần nữa để xóa':'Xóa tin')+'</button>')}).join(''):'<div class="empty">Chưa có tin nào.</div>')+'</div>';
+ return h;
+}
+
+/* ---------- views: admin ---------- */
+const SAMPLE_BATCH='Nguồn: Nhóm Việc làm thuyền viên Việt Nam\nCẦN GẤP C/O tàu hàng rời 58k dwt, cờ Panama. Nhập tàu 20/11, hợp đồng 6 tháng. Lương 5500-6000 USD. LH 0912 345 678\n---\nNguồn: Hội thuyền viên Hải Phòng\nTuyển Máy 2 tàu container 4500 TEU, chủ tàu nước ngoài, nhập tàu Singapore 05/12, lương 4800-5200 USD. Zalo 0987 654 321\n---\nNguồn: Thuyền viên Quảng Ninh\nCần AB tàu hàng nội địa, chủ tàu Việt Nam, lương 14-17 triệu, nhập tàu 15/11. LH 0933 222 111\n---\nNguồn: Hội thuyền viên Hải Phòng\nCần tuyển thuyền viên gấp, lương cao, liên hệ inbox';
+const AGENT_PROMPT="Nhiệm vụ: vào Facebook của tôi (Chrome đã đăng nhập sẵn), quét 20 nhóm thuyền viên trong danh sách bên dưới, gom toàn bộ tin tuyển dụng thuyền viên trong 3 ngày gần nhất thành MỘT khối văn bản để tôi dán vào tab \"Thu thập tin\" trong trang Quản trị của app Hải Trình (CrewJob).\n\n## Quy tắc an toàn (bắt buộc)\n- Chỉ ĐỌC. Không đăng bài, không bình luận, không thả cảm xúc, không nhắn tin, không kết bạn, không bấm \"Tham gia nhóm\".\n- Không nhập mật khẩu. Nếu Facebook yêu cầu đăng nhập lại, xác minh, hiện CAPTCHA hoặc cảnh báo \"hoạt động bất thường\" thì DỪNG NGAY và báo tôi.\n- Cuộn và đọc với tốc độ như người thật, nghỉ 5–10 giây giữa các lần cuộn và 20–30 giây giữa các nhóm.\n- Nhóm nào cần tham gia mới xem được bài thì bỏ qua, ghi vào danh sách \"không vào được\" và báo tôi. Không tự bấm tham gia.\n- Chỉ lấy nội dung liên quan đến tin tuyển dụng. Không thu thập thông tin cá nhân khác.\n\n## Cách tìm từng nhóm\nMột số nhóm trùng tên, nên phân biệt bằng SỐ THÀNH VIÊN. Tìm bằng ô tìm kiếm Facebook, chọn bộ lọc \"Nhóm\", rồi chọn đúng nhóm theo tên và số thành viên:\nhttps://www.facebook.com/search/groups/?q=<tên nhóm>\n\n## Danh sách 20 nhóm (xếp theo số thành viên, dữ liệu ngày 11/10/2026)\n\n| # | Tên nhóm | Thành viên | Bài/ngày (FB hiển thị) | Loại |\n|---|---|---|---|---|\n| 1 | VIỆC LÀM THUYỀN VIÊN VIỆT NAM - JOB FOR VIETNAMESE SEAFARER | 44K | 20+ | Chuyên tuyển dụng |\n| 2 | VIỆC LÀM THUYỀN VIÊN - JOBS FOR SEAFARERS | 27K | 10+ | Chuyên tuyển dụng |\n| 3 | THUYỀN VIÊN VIỆT NAM | 21K | 50+ | Cộng đồng, lẫn tin tuyển |\n| 4 | VIỆC LÀM THUYỀN VIÊN | 18K | 40+ | Chuyên tuyển dụng |\n| 5 | Thuyền viên tàu SB | 18K | không rõ | Cộng đồng tàu SB |\n| 6 | THUYỀN VIÊN HẢI PHÒNG | 14K | 20 | Cộng đồng, lẫn tin tuyển |\n| 7 | Hội anh em thuyền viên Sb việt nam | 14K | 5 | Cộng đồng tàu SB |\n| 8 | VIỆC LÀM THUYỀN VIÊN VIỆT NAM | 12K | 30+ | Chuyên tuyển dụng |\n| 9 | THUYỀN VIÊN VIỆT NAM (bản 12K) | 12K | 10+ | Cộng đồng, lẫn tin tuyển |\n| 10 | Hiệp Hội Thuyền Viên SB Việt Nam | 10K | 20 | Cộng đồng tàu SB |\n| 11 | Hiệp Hội Thuyền Viên Việt Nam - Vietnam Seafarer's Union (VISU) | 10K | 10+ | Hiệp hội |\n| 12 | Thuyền Viên Việt Nam (bản 9,7K) | 9,7K | 20+ | Cộng đồng, lẫn tin tuyển |\n| 13 | Việc Làm Cho Thuyền Viên Đánh Thuê Nước Ngoài | 8,7K | 10+ | Chuyên tuyển dụng |\n| 14 | Việc Làm Thuyền Viên (bản 7,4K) | 7,4K | 30+ | Chuyên tuyển dụng |\n| 15 | Việc Làm Thuyền Viên (bản 6,4K) | 6,4K | 10+ | Chuyên tuyển dụng |\n| 16 | Cộng đồng Thuyền Viên Việt Nam (bản 5,2K) | 5,2K | 4 | Cộng đồng |\n| 17 | THUYỀN VIÊN VIỆT NAM - VN SEAFARER GROUP | 4,3K | 5 | Cộng đồng |\n| 18 | thuyền viên tàu sb LH 0816052345 | 3,5K | 4 | Cộng đồng tàu SB |\n| 19 | VIỆC LÀM THUYỀN VIÊN - SEAFARER JOB | 2,9K | 3 | Chuyên tuyển dụng |\n| 20 | Cộng Đồng Thuyền Viên Việt Nam (bản 2,6K) | 2,6K | 5 | Cộng đồng |\n\nƯu tiên quét kỹ nhóm 1, 2, 4, 8, 13, 14, 15 (chuyên tuyển dụng, đăng nhiều). Các nhóm \"Cộng đồng\" chỉ lấy bài nào là tin tuyển dụng.\n\n## Cách làm với từng nhóm\n1. Mở nhóm, chọn xem bài mới nhất (sắp xếp \"Hoạt động mới\" hoặc \"Bài viết mới\"). Cuộn xuống đến khi gặp bài cũ hơn 3 ngày hoặc đã đọc tối đa khoảng 40 bài.\n2. Chỉ lấy bài TUYỂN thuyền viên (tìm sỹ quan, thuyền trưởng, máy trưởng, đại phó, thủy thủ, thợ máy, đầu bếp tàu, v.v.). Bỏ bài tìm việc, quảng cáo dịch vụ, mua bán, hỏi đáp, ảnh tàu.\n3. Với mỗi bài tuyển dụng, ghi đúng mẫu:\n\n```\nNguồn: <tên nhóm> (<số thành viên>)\n<nguyên văn nội dung bài, giữ nguyên số điện thoại, Zalo, email, mức lương, loại tàu, ngày nhập tàu, hợp đồng>\n```\n\n4. Các bài cách nhau bằng một dòng chỉ có `---`.\n5. Không tóm tắt, không sửa số liệu, không thêm nhận xét. Bài thiếu số liên hệ vẫn ghi (app sẽ đánh dấu thiếu).\n6. Bài đăng lặp giữa các nhóm (cùng nội dung, cùng số liên hệ) chỉ giữ MỘT bản, ghi \"Nguồn\" là nhóm đăng đầu tiên gặp.\n\n## Kết quả trả về\n- Một khối văn bản duy nhất, gồm tất cả bài, để tôi sao chép (lưu thành file `tin-tuyen-dung-<ngày>.txt` và gửi cho tôi).\n- Báo cáo cuối, 4 dòng:\n  - Đã quét bao nhiêu nhóm trên 20 nhóm.\n  - Lấy được bao nhiêu bài (sau khi bỏ trùng).\n  - Nhóm nào không vào được hoặc cần tham gia.\n  - Có gặp cảnh báo của Facebook không.\n\nSau khi nhận khối văn bản, tôi sẽ tự duyệt từng tin trong app Hải Trình trước khi đăng.";
+const dupKey=v=>(v.rank&&(v.joinDate||v.contact))?[v.rank,(v.shipType&&v.shipType!=='Chưa rõ loại tàu'?v.shipType:''),v.joinDate||'',v.salaryMin,String(v.contact||'').replace(/\D/g,'')].join('|'):'';
+const isReady=it=>it.status==='pending'&&!it.dup&&!it.scam&&!it.obj&&!it.miss.length&&!!it.v.contact;
+const SEEKER_RE=/(tìm việc|xin việc|cần việc|cần tìm tàu|đang tìm tàu|tìm công ty|looking for (a )?(job|ship|vessel)|seeking (a )?(job|position)|cv của (mình|em|tôi))/i;
+const HIRE_RE=/(tuyển|cần tìm|cần gấp|cần người|cần thuyền|cần \d|hiring|vacanc|wanted|recruit|crew change|nhập tàu|sign[ -]?on)/i;
+const EDU_RE=/(tuyển sinh|khai giảng|học phí|khóa học|khoá học|bổ túc|lớp (học|thi|đào tạo))/i;
+/* Chỉ giữ tin tuyển dụng: có chức danh nhận ra được, có dấu hiệu tuyển/lương, không phải bài tìm việc */
+function isJobPost(b,v){
+ if(!v.rank||!v.contact)return false;
+ if(!HIRE_RE.test(b)&&!((v.salaryMin||v.negotiable)&&v.contact))return false;
+ if(EDU_RE.test(b)&&!/tuyển (dụng|thuyền viên|gấp)|hiring|vacanc/i.test(b))return false;
+ if(SEEKER_RE.test(b.slice(0,500))&&!/tuyển|hiring|vacanc|wanted/i.test(b))return false;
+ return true;
+}
+const TRAINEE_RE=/(\btr\.|dcdt|ecdt|trainee|cadet|thực tập|học việc)/i;
+function parseBatch(text){
+ const out=[];
+ String(text||'').split(/\n[ \t]*(?:-{3}|={3}|\*{3})[ \t]*(?:\n|$)/).forEach(b=>{
+  let src='';const m=b.match(/^\s*(?:nguồn|source)\s*:\s*(.+)$/im);
+  if(m){src=m[1].trim();b=b.replace(m[0],'')}
+  b=b.trim();if(b.length<15)return;
+  const lines=b.split('\n'),rl=[],hd=[];
+  lines.forEach(l=>{if(TRAINEE_RE.test(l))return;const p=parseAd(l);if(p.rank&&p.salaryMin&&l.length<90)rl.push(l);else hd.push(l)});
+  const multi=rl.length>=2,parts=multi?rl.map(l=>hd.join('\n')+'\n'+l):[b];
+  parts.forEach((b,pi)=>{
+  const v=parseAd(b),miss=[];
+  if(multi){const pl=parseAd(rl[pi]);v.rank=pl.rank;v.salaryMin=pl.salaryMin;v.salaryMax=pl.salaryMax;v.cur=pl.cur;v.negotiable=false}
+  if(!isJobPost(b,v)){out.skipped=(out.skipped||0)+1;return}
+  if(!v.rank)miss.push('chức danh');if(!v.salaryMin&&!v.negotiable)miss.push('mức lương');
+  v.companyId='cx';
+  const key=dupKey(v),dup=!!key&&state.jobs.some(j=>dupKey({rank:j.rank,shipType:j.shipType,joinDate:j.joinDate,salaryMin:j.salaryMin,contact:j.contact})===key);
+  out.push({id:'i'+Date.now()+Math.random().toString(36).slice(2,6),raw:b,source:src||'Nguồn chưa ghi',v:v,miss:miss,key:key,dup:dup,scam:scamText(b),obj:objText(b),status:'pending'});
+  });
+ });
+ return out;
+}
+function publishItem(it){
+ const v=it.v;
+ fbAddJob({rank:v.rank,shipType:v.shipType||'Chưa rõ loại tàu',vessel:'',dwt:v.dwt||'',flag:v.flag||'',route:'',joinDate:v.joinDate||'',months:v.months||null,salaryMin:v.salaryMin||0,salaryMax:v.salaryMax||v.salaryMin||0,owner:v.owner||'foreign',cur:v.cur||'USD',certs:certsFor(v.rank,v.shipType),companyId:'cx',companyName:'',source:'admin',srcNote:'Nguồn: '+it.source,status:'approved',contact:v.contact||''});
+ it.status='done';
+}
+function collectView(){
+ const pend=state.inbox.filter(x=>x.status==='pending'),rd=pend.filter(isReady).length;
+ let h='<section class="card" style="display:flex;flex-direction:column;gap:10px"><div><b>Hộp thu tin tuyển dụng</b><p class="sub">Dán nhiều tin một lần, cách nhau bằng dòng ---. App tự bỏ bài không phải tuyển dụng hoặc không có số điện thoại, tách chức danh, loại tàu, chủ tàu, lương và liên hệ, loại tin trùng, rồi tự đăng tin có chức danh, lương và số điện thoại (ngày nhập tàu và loại tàu không bắt buộc). Tin thiếu thông tin nằm ở hàng chờ để bạn sửa. Bản thử tách bằng quy tắc đơn giản, bản thật dùng AI.</p></div>'+
+  '<details class="more" open><summary>Prompt quét 20 nhóm Facebook (sao chép rồi dán cho Claude)</summary><div class="stack" style="margin-top:10px"><p class="sub">App không tự vào Facebook thay bạn. Hãy nhờ trợ lý AI có trình duyệt, đã đăng nhập Facebook của bạn, đọc các nhóm theo yêu cầu dưới đây rồi dán kết quả vào ô bên dưới. Bạn nên đọc nhanh tin trước khi duyệt.</p><div class="field"><label>Yêu cầu mẫu cho trợ lý</label><textarea readonly rows="8">'+esc(AGENT_PROMPT)+'</textarea></div><div class="row"><button class="btn ghost sm" data-a="copy" data-v="'+esc(AGENT_PROMPT)+'">Sao chép yêu cầu</button></div></div></details>'+
+  '<div class="field"><label for="cl-raw">Dán tin vào đây</label><textarea id="cl-raw" rows="7">'+esc(state.clRaw||'')+'</textarea></div><div class="row"><button class="btn accent" data-a="collect">'+(state.autoPub===false?'Đưa vào hộp thu':'Lọc và tự đăng')+'</button><button class="btn ghost" data-a="clAuto" aria-pressed="'+(state.autoPub!==false)+'">Tự đăng tin đủ điều kiện: '+(state.autoPub!==false?'BẬT':'TẮT')+'</button><button class="btn ghost" data-a="clSample">Dùng mẫu</button></div></section>';
+ h+='<div class="row between"><h2 class="sec-title" style="font-size:21px">Chờ duyệt ('+pend.length+')</h2>'+(rd?'<button class="btn accent sm" data-a="clApproveAll">Đăng '+rd+' tin sẵn sàng</button>':'')+'</div>';
+ h+=pend.length?'<div class="list">'+pend.map(it=>{
+  const v=it.v,r=v.rank?rk(v.rank):null,ready=isReady(it);
+  let c='<article class="item"><div class="row between" style="align-items:flex-start"><div style="min-width:0"><b>'+(r?esc(r.abbr)+' · ':'')+esc(v.shipType||'Chưa rõ loại tàu')+'</b><div class="sub">'+esc(it.source)+'</div></div>'+(it.scam?'<span class="pill bad">Nghi thu phí, đặt cọc</span>':it.obj?'<span class="pill bad">Nội dung không phù hợp</span>':it.dup?'<span class="pill warn">Trùng tin</span>':ready?'<span class="pill ok">Sẵn sàng</span>':'<span class="pill bad">Thiếu '+esc(it.miss.concat(v.contact?[]:['liên hệ']).join(', '))+'</span>')+'</div>';
+  if(v.rank||v.salaryMin)c+='<div class="sub">'+(v.joinDate?'Nhập tàu '+fmtDate(v.joinDate)+' · ':'')+(v.salaryMin?salLine(Object.assign({cur:'USD'},v))+' · ':'')+'Chủ tàu '+ownerLabel(v.owner)+(v.contact?' · '+esc(v.contact):'')+'</div>';
+  c+='<div class="sub clip">'+esc(it.raw.slice(0,160))+(it.raw.length>160?'…':'')+'</div><div class="row">'+(ready?'<button class="btn accent sm" data-a="clApprove" data-v="'+it.id+'">Đăng</button>':'')+'<button class="btn ghost sm" data-a="clEdit" data-v="'+it.id+'">'+(state.editInbox===it.id?'Đóng':'Sửa và đăng')+'</button><button class="btn danger sm" data-a="clReject" data-v="'+it.id+'">Bỏ qua</button></div>';
+  if(state.editInbox===it.id)c+=jobForm('ad',it.v);
+  return c+'</article>';
+ }).join('')+'</div>':'<div class="empty">Hộp thu trống. Dán tin vào ô phía trên.</div>';
+ const dn=state.inbox.filter(x=>x.status==='done').length,rj=state.inbox.filter(x=>x.status==='rejected').length;
+ if(dn||rj)h+='<p class="sub">Đã đăng '+dn+' tin · đã bỏ qua '+rj+' tin.</p>';
+ return h;
+}
+function adView(){
+ const pj=state.jobs.filter(j=>j.status==='pending'),pc=CO.filter(c=>c.status==='pending');
+ const T=(id,l,b)=>'<button role="tab" aria-selected="'+(state.adTab===id)+'" data-a="adTab" data-v="'+id+'">'+l+(b?'<span class="badge">'+b+'</span>':'')+'</button>';
+ let h='<h1 class="sec-title">Quản trị</h1><div class="tabs" role="tablist">'+T('posts','Tin đã đăng',0)+T('collect','Thu thập tin',state.inbox.filter(x=>x.status==='pending').length)+T('reports','Báo cáo',state.reports.filter(r=>r.status==='open').length)+T('prices','Giá gia hạn')+T('stats','Tổng quan')+'</div>';
+ if(state.adTab==='posts'){const P=state.jobs.filter(j=>j.status==='approved');h+='<div class="list">'+(P.length?P.map(j=>jobLine(j,'<button class="btn danger sm" data-a="removeJob" data-v="'+j.id+'">Gỡ tin</button>')).join(''):'<div class="empty">Chưa có tin nào đang hiển thị.</div>')+'</div>'}
+ if(state.adTab==='companies')h+='<div class="list">'+CO.map(c=>{const s=ST[c.status]||ST.pending;return'<article class="item"><div class="row between"><div><b>'+esc(c.name)+'</b><div class="sub">'+esc(c.address||c.city)+' · '+esc(c.contact)+'</div></div><span class="pill '+(c.status==='approved'?'ok':c.status==='pending'?'warn':'bad')+'">'+(c.status==='approved'?'Đã xác minh':c.status==='pending'?'Chờ xác minh':'Bị từ chối')+'</span></div>'+(c.status==='pending'?'<div class="row"><button class="btn accent sm" data-a="approveCo" data-v="'+c.id+'">Xác minh</button><button class="btn danger sm" data-a="rejectCo" data-v="'+c.id+'">Từ chối</button></div>':'')+'</article>'}).join('')+'</div>';
+ if(state.adTab==='collect')h+=collectView();
+ if(state.adTab==='reports'){const R=state.reports.filter(r=>r.status==='open');h+='<div class="list">'+(R.length?R.map(r=>{const j=state.jobs.find(x=>x.id===r.jobId);return'<article class="item"><div><b>'+esc(rpLabel(r.reason))+'</b><div class="sub">'+(j?esc(rk(j.rank).abbr)+' · '+esc(j.shipType)+' · '+esc(co(j.companyId).name):'Tin đã bị xóa')+'</div>'+(r.note?'<div class="sub clip">'+esc(r.note)+'</div>':'')+'</div><div class="row">'+(j&&j.status==='approved'?'<button class="btn danger sm" data-a="rpRemove" data-v="'+r.id+'">Gỡ tin</button>':'')+'<button class="btn ghost sm" data-a="rpDismiss" data-v="'+r.id+'">Bỏ qua</button></div></article>'}).join(''):'<div class="empty">Chưa có báo cáo nào cần xử lý. Cần xử lý báo cáo trong 24 giờ.</div>')+'</div>'}
+ if(state.adTab==='prices'){
+  h+='<form class="card form" data-f="quote"><div class="field"><label for="qz-key">Giấy tờ</label><select id="qz-key" name="key">'+selOpts(Object.keys(CERT).filter(k=>k!=='OTHER').map(k=>[k,CERT[k].name]),'MEDICAL')+'</select></div>'+
+   '<div class="field"><label for="qz-pr">Giá (VNĐ)</label><input type="number" id="qz-pr" name="price" min="0" required></div>'+
+   '<div class="full row"><button class="btn accent" type="submit">Thêm báo giá</button></div></form>';
+  h+='<div class="list">'+state.quotes.map(q=>quoteCard(q).replace('</article>','<div class="full row"><button class="btn danger sm" data-a="delQuote" data-v="'+q.id+'">Xóa</button></div></article>')).join('')+'</div>';
+ }
+ if(state.adTab==='stats'){
+  const ap=state.jobs.filter(j=>j.status==='approved').length;
+  h+='<div class="legend card"><div><span class="n">'+ap+'</span><span class="sub">Tin đang hiển thị</span></div><div><span class="n">'+pc.length+'</span><span class="sub">Công ty chờ xác minh</span></div><div><span class="n">'+CO.filter(c=>c.status==='approved'&&c.id!=='cx').length+'</span><span class="sub">Công ty đã xác minh</span></div><div><span class="n">'+state.quotes.filter(q=>diffDays(q.validUntil,isoToday)<0).length+'</span><span class="sub">Báo giá cần xác nhận lại</span></div></div>';
+  const S=state.stats;
+  if(!S)h+='<div class="empty">Chưa có số liệu người dùng. Số liệu được cập nhật sau mỗi lần máy quét chạy (08:00 và 19:00).</div>';
+  else{
+   const G=(t,a)=>'<h3 class="sec-title" style="font-size:16px;margin:16px 0 6px">'+t+'</h3><div class="legend card">'+a.map(x=>'<div><span class="n">'+(x[1]==null?'—':x[1])+'</span><span class="sub">'+x[0]+'</span></div>').join('')+'</div>';
+   const L=(t,a,f)=>a&&a.length?'<h3 class="sec-title" style="font-size:16px;margin:16px 0 6px">'+t+'</h3><div class="card" style="padding:6px 14px">'+a.map(f).join('')+'</div>':'';
+   const row=(l,v)=>'<div class="row between" style="padding:7px 0;border-bottom:1px solid var(--line)"><span class="clip" style="min-width:0">'+esc(l)+'</span><b>'+v+'</b></div>';
+   h+=G('Người dùng',[['Đã đăng ký',S.usersTotal],['Hoạt động 7 ngày',S.usersActive7],['Hoạt động 30 ngày',S.usersActive30],['Mới hôm nay',S.usersNewToday],['Mới 7 ngày',S.usersNew7],['Bật thông báo việc',S.pushOn]]);
+   h+=G('Công ty tuyển dụng',[['Công ty có tin đang hiển thị',S.companiesHiring],['Đầu mối liên hệ (SĐT)',S.recruiters],['Công ty tự đăng ký trong app',S.companiesRegistered],['Nhóm/page nguồn có tin',S.sourcesActive]]);
+   h+=G('Tin tuyển dụng',[['Đang hiển thị',S.jobsApproved],['Đăng hôm nay',S.jobsToday],['Đăng 7 ngày',S.jobs7d],['Tin trả lương rõ',S.jobsWithSalary]]);
+   h+=L('Chức danh nhiều tin nhất',S.byRank,x=>row(rk(x[0]).abbr+' · '+rk(x[0]).name,x[1]));
+   h+=L('Công ty đăng nhiều tin nhất',S.topCompanies,x=>row(x[0],x[1]));
+   h+=L('Nguồn nhiều tin nhất',S.topSources,x=>row(x[0],x[1]));
+   h+='<p class="sub" style="margin-top:12px">Cập nhật '+(S.at?new Date(fbTs(S.at)).toLocaleString('vi-VN'):'')+(S.aiUsd!=null?' · Chi phí AI tháng này '+S.aiUsd.toFixed(2)+' / '+S.aiBudget+' USD':'')+'</p>';
+  }
+ }
+ return h+'<button class="btn ghost full" data-a="switchAcct">Đổi loại tài khoản</button>';
+}
+
+/* ---------- Firebase ---------- */
+const FB_CFG={apiKey:'AIzaSyCM_Cc1X5ixYGhIH3pPqjIwhuoSz1NFpbY',authDomain:'crewjob-bdb74.firebaseapp.com',projectId:'crewjob-bdb74',storageBucket:'crewjob-bdb74.firebasestorage.app',messagingSenderId:'756648034190',appId:'1:756648034190:web:ab0d9d0eb47f90a6092edf'};
+const ADMIN_EMAILS=['phucthanh007@gmail.com'];
+const FB={ready:false,loading:false,user:null,auth:null,db:null,err:'',unsub:[]};
+let QPIMG='';
+const AI_REGION='asia-southeast1';
+async function aiParseJob(text,img){
+ await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js');
+ const f=firebase.app().functions(AI_REGION).httpsCallable('parseJob',{timeout:70000});
+ const r=await f({text:text,image:img||''});return r.data}
+function shrinkImage(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const M=1568,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.85).split(',')[1])};im.onerror=()=>rej(new Error('Ảnh lỗi'));im.src=fr.result};fr.onerror=()=>rej(new Error('Không đọc được ảnh'));fr.readAsDataURL(file)})}
+document.addEventListener('change',async e=>{const t=e.target;if(t&&t.id==='qp-file'&&t.files&&t.files[0]){const n=$('#qp-fname');try{QPIMG=await shrinkImage(t.files[0]);if(n)n.textContent='Đã chọn 1 ảnh'}catch(x){QPIMG='';toast('Không đọc được ảnh này')}}});
+function loadScript(src){return new Promise((res,rej)=>{const t=document.createElement('script');t.src=src;t.onload=res;t.onerror=()=>rej(new Error('Không tải được '+src));document.head.appendChild(t)})}
+function fbToast(m){try{toast(m)}catch(e){}}
+async function fbInit(){
+ if(FB.ready||FB.loading)return;FB.loading=true;
+ try{
+  const B='https://www.gstatic.com/firebasejs/10.12.2/';
+  await loadScript(B+'firebase-app-compat.js');
+  await Promise.all([loadScript(B+'firebase-auth-compat.js'),loadScript(B+'firebase-firestore-compat.js')]);
+  firebase.initializeApp(FB_CFG);FB.auth=firebase.auth();FB.db=firebase.firestore();FB.ready=true;FB.err='';
+  FB.auth.onAuthStateChanged(fbOnUser);
+  fbListenPublic();
+ }catch(e){FB.err='Chưa kết nối được máy chủ. Kiểm tra mạng rồi mở lại app.';render()}
+ finally{FB.loading=false}
+}
+const fbTs=v=>v&&v.toMillis?v.toMillis():(typeof v==='number'?v:Date.now());
+function fbListenPublic(){
+ const onErr=e=>{if(!FB.errShown){FB.errShown=true;fbToast('Không tải được dữ liệu từ máy chủ')}};
+ FB.db.collection('jobs').where('status','==','approved').onSnapshot(snap=>{
+  state.jobs=snap.docs.map(d=>{const x=d.data({serverTimestamps:'estimate'}),ts=fbTs(x.ts);return Object.assign({},x,{id:d.id,ts:ts,postedHrs:Math.max(0,Math.floor((Date.now()-ts)/36e5))})}).filter(j=>state.isAdmin||!j.ts||Date.now()-j.ts<10*864e5).sort((a,b)=>b.ts-a.ts);
+  state.jobs.forEach(j=>{if(j.companyId&&j.companyId!=='cx'&&j.companyId!==CO[0].id&&!CO.some(c=>c.id===j.companyId))CO.push({id:j.companyId,name:j.companyName||'Nhà tuyển dụng',city:'',contact:j.contact||'',status:'approved'})});
+  render();
+ },onErr);
+ FB.db.collection('quotes').onSnapshot(snap=>{state.quotes=snap.docs.map(d=>Object.assign({},d.data(),{id:d.id}));render()},onErr);
+}
+let PUSH_TOK='',pushT=null;
+window.__pushCb=t=>{PUSH_TOK=t||'';syncPush()};
+function pushInit(){try{if(window.CrewPush&&CrewPush.request)CrewPush.request()}catch(e){}}
+function syncPush(){
+ clearTimeout(pushT);pushT=setTimeout(()=>{
+  if(!PUSH_TOK||!(FB.ready&&FB.user))return;const a=state.alert;
+  FB.db.collection('users').doc(FB.user.uid).set({push:{token:PUSH_TOK,on:!!(state.pro&&a.on&&state.role==='sea'),rank:a.rank,minSalary:Number(a.minSalary)||0,within:Number(a.within)||90}},{merge:true}).catch(()=>{});
+ },1500)}
+async function fbOnUser(u){
+ FB.user=u||null;if(u)pushInit();
+ state.isAdmin=!!(u&&u.emailVerified&&ADMIN_EMAILS.indexOf(String(u.email||'').toLowerCase())>=0);
+ FB.unsub.forEach(f=>{try{f()}catch(e){}});FB.unsub=[];
+ if(u){
+  CO[0].id=u.uid;
+  try{const d=await FB.db.collection('users').doc(u.uid).get();if(d.exists){const c=d.data().company||{};Object.assign(CO[0],{name:c.name||'',address:c.address||'',city:c.city||'',contact:c.contact||'',person:c.person||''})}}catch(e){}
+  if(state.isAdmin){FB.unsub.push(FB.db.collection('reports').onSnapshot(snap=>{const st=snap.docs.find(d=>d.id==='_stats');state.stats=st?st.data():null;state.reports=snap.docs.filter(d=>d.id!=='_stats').map(d=>{const x=d.data();return Object.assign({},x,{id:d.id,ts:fbTs(x.ts)})});render()},()=>{}))}
+ }else{
+  CO[0].id='me';Object.assign(CO[0],{name:'',address:'',city:'',contact:'',person:''});
+  if(state.role==='co'||state.role==='ad')state.role=null;
+ }
+ render();
+}
+function fbSignIn(){
+ if(!FB.ready){fbToast('Đang kết nối máy chủ, thử lại sau vài giây');fbInit();return}
+ try{
+  if(window.CrewAuth&&CrewAuth.available()){fbToast('Đang mở đăng nhập Google...');clearTimeout(FB.t);FB.t=setTimeout(()=>fbToast('Đăng nhập chưa phản hồi. Kiểm tra mạng và Google Play rồi thử lại'),25000);CrewAuth.signIn();return}
+  FB.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>fbToast('Không đăng nhập được: '+(e.code||e.message)));
+ }catch(e){fbToast('Không đăng nhập được')}
+}
+window.__gsCb=function(r){
+ clearTimeout(FB.t);
+ if(r&&r.appleIdToken){const pv=new firebase.auth.OAuthProvider('apple.com');FB.auth.signInWithCredential(pv.credential({idToken:r.appleIdToken,rawNonce:r.nonce})).catch(e=>fbToast('Đăng nhập thất bại: '+(e.code||e.message)))}
+ else if(r&&r.idToken){FB.auth.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(r.idToken)).catch(e=>fbToast('Đăng nhập thất bại: '+(e.code||e.message)))}
+ else if(r&&r.cancelled){}
+ else fbToast('Không đăng nhập được'+(r&&r.err?': '+r.err:''));
+};
+function fbSignOut(){if(!FB.auth)return;FB.auth.signOut().then(()=>{state.role=null;state.isAdmin=false;render()})}
+function needLogin(){if(!FB.ready||!FB.user){fbToast('Hãy đăng nhập bằng Google trước');return true}return false}
+function fbAddJob(o){
+ if(needLogin())return;
+ const d=Object.assign({},o,{uid:FB.user.uid,ts:firebase.firestore.FieldValue.serverTimestamp()});
+ if(d.source!=='admin')d.companyId=FB.user.uid;
+ Object.keys(d).forEach(k=>{if(d[k]===undefined||d[k]===null&&k!=='months')delete d[k]});
+ FB.db.collection('jobs').add(d).catch(e=>fbToast('Không đăng được tin: '+(e.code||e.message)));
+}
+function fbAdd(col,o){if(needLogin())return;FB.db.collection(col).add(o).catch(e=>fbToast('Lỗi lưu: '+(e.code||e.message)))}
+function fbUpd(col,id,o){if(needLogin())return;FB.db.collection(col).doc(id).update(o).catch(e=>fbToast('Lỗi cập nhật: '+(e.code||e.message)))}
+function fbDel(col,id){if(needLogin())return;FB.db.collection(col).doc(id).delete().catch(e=>fbToast('Lỗi xóa: '+(e.code||e.message)))}
+function fbReport(o){
+ if(!FB.ready){fbToast('Chưa kết nối máy chủ, thử lại sau');return}
+ FB.db.collection('reports').add({jobId:String(o.jobId).slice(0,60),reason:String(o.reason||'').slice(0,40),note:String(o.note||'').slice(0,500),status:'open',ts:firebase.firestore.FieldValue.serverTimestamp(),uid:FB.user?FB.user.uid:''}).then(()=>fbToast('Đã gửi báo cáo, chúng tôi sẽ xem xét trong 24 giờ')).catch(e=>fbToast('Không gửi được báo cáo: '+(e.code||e.message)));
+}
+function fbSaveCompany(){
+ if(needLogin())return;const c=CO[0];
+ FB.db.collection('users').doc(FB.user.uid).set({company:{name:c.name,address:c.address,city:c.city,contact:c.contact,person:c.person||''}},{merge:true}).catch(e=>fbToast('Lỗi lưu: '+(e.code||e.message)));
+}
+async function fbDeleteMine(){
+ if(!FB.ready||!FB.user)return;
+ try{
+  const uid=FB.user.uid,q=await FB.db.collection('jobs').where('uid','==',uid).get(),b=FB.db.batch();
+  q.docs.forEach(d=>b.delete(d.ref));b.delete(FB.db.collection('users').doc(uid));await b.commit();
+  try{await FB.user.delete()}catch(e){await FB.auth.signOut()}
+ }catch(e){fbToast('Chưa xóa hết dữ liệu trên máy chủ: '+(e.code||e.message))}
+}
+function authCard(){
+ if(FB.user)return'<div class="row between"><div><b>Đã đăng nhập</b><div class="sub">'+esc(FB.user.email||'')+(state.isAdmin?' · Quản trị':'')+'</div></div><button class="btn ghost sm" data-a="gSignOut">Đăng xuất</button></div>';
+ return'<div><b>Đăng nhập</b><p class="sub">Thuyền viên không cần đăng nhập, cứ chọn Bắt đầu bên dưới. Chỉ công ty tuyển dụng mới cần đăng nhập Google để đăng tin.</p></div><button class="btn accent full" data-a="gSignIn">Đăng nhập bằng Google</button>'+((window.CrewAuth&&window.CrewAuth.apple)?'<button class="btn full" style="margin-top:8px;background:#000;color:#fff" data-a="aSignIn">Đăng nhập bằng Apple</button>':'')+(FB.err?'<p class="sub">'+esc(FB.err)+'</p>':'');
+}
+
+/* ---------- render ---------- */
+function render(){
+ const y=window.scrollY;
+ if(state.legal){$('#app').innerHTML=legalView();window.scrollTo(0,0);return}
+ if(!state.role){$('#app').innerHTML=welcome();window.scrollTo(0,y);return}
+ let body;
+ if(state.role==='sea')body=state.tab==='jobs'?jobsView():state.tab==='docs'?docsView():state.tab==='msgs'?(state.chat?chatView():msgsView()):meView();
+ else body=state.role==='co'?(state.chat?chatView():state.coJob?appsView():coView()):adView();
+ $('#app').innerHTML=header()+'<main class="wrap main">'+banner()+body+'</main>'+(state.role==='sea'?navBar():'');
+ window.scrollTo(0,y);
+ saveState();
+}
+
+/* ---------- actions ---------- */
+const A={
+ role:v=>{if(v!=='ad'&&!state.legalOK){toast('Hãy đánh dấu đồng ý điều khoản và xác nhận từ đủ 18 tuổi');return}if(v==='co'&&!(FB.user)){toast('Công ty cần đăng nhập bằng Google để đăng tin');return}if(v==='ad'&&!state.isAdmin){toast('Tài khoản này không có quyền quản trị');return}state.role=v;state.expanded=null;state.chat=null;state.coJob=null;if(v==='sea')state.tab='jobs';render();window.scrollTo(0,0)},
+ tab:v=>{state.tab=v;state.addStep=null;state.bulk=null;state.chat=null;render();window.scrollTo(0,0)},
+ goJobs:()=>{state.filters.rank=state.me.rank;state.tab='jobs';state.expanded=null;state.addStep=null;state.chat=null;render();window.scrollTo(0,0)},
+ openJob:v=>{const j=state.jobs.find(x=>x.id===v);state.filters.rank=j.rank;state.tab='jobs';state.expanded=v;state.chat=null;render();window.scrollTo(0,0)},
+ goMe:()=>{state.tab='me';state.chat=null;render();window.scrollTo(0,0)},
+ fRank:v=>{state.filters.rank=v;state.expanded=null;render()},
+ expand:v=>{state.expanded=state.expanded===v?null:v;render()},
+ apply:v=>{if(state.applied.has(v))return;if(!state.share){state.pendingApply=v;render();return}A.doApply(v)},
+ applyShare:()=>{const v=state.pendingApply;state.share=true;state.pendingApply=null;if(v)A.doApply(v)},
+ applyNoShare:()=>{const v=state.pendingApply;state.pendingApply=null;if(v)A.doApply(v)},
+ applyCancel:()=>{state.pendingApply=null;render()},
+ openLegal:v=>{state.legal=v;render()},
+ closeLegal:()=>{state.legal=null;render();window.scrollTo(0,0)},
+ reportOpen:v=>{state.report={jobId:v};render()},
+ reportClose:()=>{state.report=null;render()},
+ rpRemove:v=>{const r=state.reports.find(x=>x.id===v);if(!r)return;fbUpd('jobs',r.jobId,{status:'removed'});state.reports.forEach(x=>{if(x.jobId===r.jobId){x.status='done';fbUpd('reports',x.id,{status:'done'})}});toast('Đã gỡ tin');render()},
+ rpDismiss:v=>{const r=state.reports.find(x=>x.id===v);if(r){r.status='dismissed';fbUpd('reports',r.id,{status:'dismissed'})}render()},
+ blockUser:()=>{if(!state.chat)return;const j=state.jobs.find(x=>x.id===state.chat.jobId),sea=state.role==='sea',key=sea?'co:'+j.companyId:'cand:'+state.chat.candId;
+  if(state.blockArm===key){if(state.blocked.indexOf(key)<0)state.blocked.push(key);state.blockArm=null;state.chat=null;toast('Đã chặn. Bạn có thể bỏ chặn trong Hồ sơ');render();window.scrollTo(0,0)}else{state.blockArm=key;render()}},
+ unblock:v=>{state.blocked=state.blocked.filter(x=>x!==v);render()},
+ delAccount:()=>{
+  if(!state.delConfirm){state.delConfirm=true;render();return}
+  if(state.role==='sea'){state.docs=[];state.apps=state.apps.filter(a=>a.candId!=='me');state.threads=state.threads.filter(t=>t.candId!=='me');state.applied=new Set();state.me={name:'Thuyền viên mới',rank:'AB',ship:'Bulk carrier',years:0,salMin:0,salMax:0,avail:D(30)};state.alert={on:false,rank:'AB',minSalary:1500,within:90};state.editProfile=false}
+  else if(state.role==='co'){const ids=state.jobs.filter(j=>j.companyId===CO[0].id).map(j=>j.id);state.jobs=state.jobs.filter(j=>ids.indexOf(j.id)<0);state.apps=state.apps.filter(a=>ids.indexOf(a.jobId)<0);state.threads=state.threads.filter(t=>ids.indexOf(t.jobId)<0);state.coJob=null;state.qp=null}
+  fbDeleteMine();state.share=false;state.legalOK=false;state.blocked=[];state.reports=[];state.delConfirm=false;state.role=null;state.chat=null;state.tab='jobs';toast('Đã xóa tài khoản và toàn bộ dữ liệu của bạn');render();window.scrollTo(0,0)},
+ doApply:v=>{state.applied.add(v);if(!state.apps.some(a=>a.jobId===v&&a.candId==='me'))state.apps.push({jobId:v,candId:'me',seen:false});const j=state.jobs.find(x=>x.id===v);toast('Đã gửi hồ sơ tới '+co(j.companyId).name+' (bản thử, chưa gửi thật)');render()},
+ openChatJob:v=>{state.tab='msgs';state.chat={jobId:v,candId:'me'};state.expanded=null;const t=getThread(v,'me',true);t.uSea=0;render();window.scrollTo(0,document.body.scrollHeight)},
+ openThread:v=>{const p=v.split('|');state.chat={jobId:p[0],candId:p[1]};const t=getThread(p[0],p[1],true);if(state.role==='sea')t.uSea=0;else{t.uCo=0;const a=state.apps.find(x=>x.jobId===p[0]&&x.candId===p[1]);if(a)a.seen=true}render();window.scrollTo(0,document.body.scrollHeight)},
+ backChat:()=>{state.chat=null;render();window.scrollTo(0,0)},
+ viewApps:v=>{state.coJob=v;state.chat=null;render();window.scrollTo(0,0)},
+ backApps:()=>{state.coJob=null;state.chat=null;render();window.scrollTo(0,0)},
+ qpParse:async()=>{const el=$('#qp-line'),raw=el?el.value.trim():'';if(!raw&&!QPIMG){toast('Hãy dán nội dung hoặc đính kèm ảnh trước');return}
+  if(raw&&(objText(raw)||scamText(raw))){toast('Nội dung có chữ thu phí, đặt cọc hoặc không phù hợp, không thể đăng');return}
+  const mk=v=>{const m=[];if(!v.rank)m.push('chức danh');if(!v.shipType)m.push('loại tàu');if(!v.joinDate)m.push('ngày nhập tàu');if(!v.salaryMin)m.push('mức lương');if(!v.contact)m.push('liên hệ');return m};
+  let used='';
+  if(FB.ready&&FB.user){
+   const go=$('#qp-go');if(go){go.disabled=true;go.textContent='AI đang đọc...'}
+   try{
+    const res=await aiParseJob(raw,QPIMG);
+    if(res&&res.jobs&&res.jobs.length){
+     const L=res.jobs.map(j=>({raw:raw,v:j,miss:mk(j),checks:(j.check||[]).join('; ')}));
+     const first=L.shift();state.qpQueue=L;state.qp=Object.assign(first,{total:L.length+1});used='ai';
+    }else if(res&&res.recruit===false){toast('AI thấy nội dung này không phải tin tuyển dụng thuyền viên');if(go){go.disabled=false;go.textContent='Tách thông tin'}return}
+   }catch(e){
+    const c=e&&(e.code||'')+'';
+    if(c.indexOf('resource-exhausted')>=0)toast('Hôm nay đã hết lượt AI, app tách bằng quy tắc đơn giản');
+    else if(!raw){toast('Chưa đọc được ảnh, hãy gõ hoặc dán nội dung');const g2=$('#qp-go');if(g2){g2.disabled=false;g2.textContent='Tách thông tin'}return}
+   }
+  }
+  if(!used){
+   if(!raw){toast('Hãy đăng nhập Google để đọc ảnh bằng AI');return}
+   const v=parseAd(raw);state.qpQueue=[];state.qp={raw:raw,v:v,miss:mk(v)};
+  }
+  render();toast(state.qp.miss.length?'Đã tách, còn '+state.qp.miss.length+' mục cần bạn điền':'Đã tách đủ thông tin, hãy kiểm tra rồi đăng')},
+ qpClear:()=>{state.qp=null;state.qpQueue=[];QPIMG='';render()},
+ docOpen:v=>{state.docOpen=state.docOpen===v?null:v;state.renewOpen=null;render()},
+ bulkOn:()=>{state.bulk=[];state.renewOpen=null;render()},
+ bulkOff:()=>{state.bulk=null;render()},
+ bulkSel:v=>{const i=state.bulk.indexOf(v);if(i>=0)state.bulk.splice(i,1);else state.bulk.push(v);render()},
+ zaloCopy:v=>{const msg=renewMsg(v.split(','));try{navigator.clipboard.writeText(msg).then(()=>toast('Đã sao chép nội dung, dán vào khung chat Zalo')).catch(()=>toast('Hãy tự gõ danh sách giấy tờ khi nhắn Zalo'))}catch(e){toast('Hãy tự gõ danh sách giấy tờ khi nhắn Zalo')}},
+ copy:v=>{try{navigator.clipboard.writeText(v).then(()=>toast('Đã sao chép')).catch(()=>toast('Hãy chọn số và sao chép thủ công'))}catch(e){toast('Hãy chọn số và sao chép thủ công')}},
+ editProfile:()=>{state.editProfile=true;render()},
+ cancelProfile:()=>{state.editProfile=false;render()},
+ switchAcct:()=>{state.role=null;state.expanded=null;state.chat=null;state.coJob=null;render();window.scrollTo(0,0)},
+ repost:v=>{const j=state.jobs.find(x=>x.id===v);state.qp={raw:'',v:Object.assign({},j,{joinDate:''}),miss:['ngày nhập tàu'],repost:true};state.coTab='post';state.coJob=null;render();window.scrollTo(0,0);toast('Đã điền sẵn tin cũ, hãy chọn ngày nhập tàu mới')},
+ togglePro:()=>{if(LAUNCH_FREE)return;state.pro=!state.pro;state.expanded=null;render()},
+ addDoc:()=>{state.addStep='pick';resetNew();state.tab='docs';render();window.scrollTo(0,0)},
+ pickType:v=>{const ex=v==='OTHER'?null:state.docs.find(d=>d.key===v);state.newDoc={key:v,expiry:(ex&&ex.expiry)||'',number:(ex&&ex.number)||'',issue:(ex&&ex.issue)||'',cap:(ex&&ex.cap)||'',title:'',scan:null,found:[]};state.addStep='photo';render();window.scrollTo(0,0);if(!mlHas())ocrWarm()},
+ backPick:()=>{state.addStep='pick';resetNew();render()},
+ cancelAdd:()=>{state.addStep=null;resetNew();render();window.scrollTo(0,0)},
+ renew:v=>{state.renewOpen=state.renewOpen===v?null:v;render()},
+ delDoc:v=>{if(state.delArm===v){state.docs=state.docs.filter(x=>x.id!==v);state.delArm=null;toast('Đã xóa giấy tờ')}else state.delArm=v;render()},
+ coTab:v=>{state.coTab=v;state.coJob=null;state.chat=null;render()},
+ adTab:v=>{state.adTab=v;render()},
+ deleteJob:v=>{if(state.delJob===v){fbDel('jobs',v);state.jobs=state.jobs.filter(x=>x.id!==v);state.apps=state.apps.filter(x=>x.jobId!==v);state.threads=state.threads.filter(x=>x.jobId!==v);state.delJob=null;toast('Đã xóa tin')}else state.delJob=v;render()},
+ removeJob:v=>{fbUpd('jobs',v,{status:'removed'});toast('Đã gỡ tin');render()},
+ approveCo:v=>{CO.find(x=>x.id===v).status='approved';toast('Đã xác minh công ty');render()},
+ rejectCo:v=>{CO.find(x=>x.id===v).status='rejected';render()},
+ collect:()=>{const el=$('#cl-raw'),raw=el?el.value:'';state.clRaw=raw;const L=parseBatch(raw);if(!L.length){toast(L.skipped?'Không có tin tuyển dụng nào (đã bỏ '+L.skipped+' bài khác)':'Không thấy tin nào để thu thập');return}
+  L.forEach(it=>{if(state.inbox.some(x=>x.key&&x.key===it.key&&it.key))it.dup=true;state.inbox.push(it)});
+  const auto=state.autoPub!==false;let dp=0;if(auto)L.forEach(x=>{if(x.dup&&!x.scam&&!x.obj){x.status='rejected';dp++}});
+  const rd=L.filter(isReady);if(auto)rd.forEach(publishItem);
+  const sk=(L.skipped?', bỏ '+L.skipped+' bài không phải tuyển dụng hoặc không có số điện thoại':'')+(dp?', '+dp+' tin trùng':''),left=L.filter(x=>x.status==='pending').length;
+  state.clRaw='';render();toast(auto?('Đã tự đăng '+rd.length+' tin'+sk+(left?', '+left+' tin chờ duyệt':'')):(L.length+' tin vào hộp thu, '+rd.length+' tin sẵn sàng duyệt'+sk))},
+ clAuto:()=>{const el=$('#cl-raw');if(el)state.clRaw=el.value;state.autoPub=state.autoPub===false;render()},
+ clSample:()=>{state.clRaw=SAMPLE_BATCH;render()},
+ clApprove:v=>{const it=state.inbox.find(x=>x.id===v);if(!it)return;if(!isReady(it)){toast(it.scam||it.obj?'Tin bị gắn cờ, không thể đăng':'Tin còn thiếu thông tin, hãy bấm Sửa và đăng');return}publishItem(it);toast('Đã đăng tin');render()},
+ clApproveAll:()=>{const L=state.inbox.filter(isReady);L.forEach(publishItem);toast('Đã đăng '+L.length+' tin');render()},
+ clEdit:v=>{state.editInbox=state.editInbox===v?null:v;render()},
+ clReject:v=>{const it=state.inbox.find(x=>x.id===v);if(it)it.status='rejected';if(state.editInbox===v)state.editInbox=null;render()},
+ renewQuote:v=>{fbUpd('quotes',v,{updated:isoToday,validUntil:D(30)});toast('Đã xác nhận lại báo giá')},
+ delQuote:v=>{fbDel('quotes',v)},
+ gSignIn:()=>{fbSignIn()},
+ aSignIn:()=>{try{fbToast('Đang mở đăng nhập Apple...');clearTimeout(FB.t);FB.t=setTimeout(()=>fbToast('Đăng nhập chưa phản hồi, thử lại'),25000);CrewAuth.signInApple()}catch(e){fbToast('Không đăng nhập được')}},
+ gSignOut:()=>{fbSignOut()}
+};
+const C={
+ legalOK:(v,t)=>{state.legalOK=t.checked;render()},
+ shareOn:(v,t)=>{state.share=t.checked;render()},
+ fShip:v=>{state.filters.ship=v;render()},
+ fOwner:v=>{state.filters.owner=v;render()},
+ fWithin:v=>{state.filters.within=v;render()},
+ fMin:v=>{if(v==='custom'){state.filters.salMode='custom'}else{state.filters.salMode='list';state.filters.minSalary=Number(v)}render()},
+ fMinC:v=>{state.filters.minSalary=Math.max(0,Number(v)||0);render()},
+ fSort:v=>{state.filters.sort=v;render()},
+ meRank:v=>{state.me.rank=v;state.alert.rank=v;state.filters.rank=v;render()},
+ alOn:(v,t)=>{state.alert.on=t.checked;render()},
+ alRank:v=>{state.alert.rank=v;render()},
+ alMin:v=>{state.alert.minSalary=Number(v);render()},
+ alIn:v=>{state.alert.within=Number(v);render()}
+};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;const f=A[t.dataset.a];if(f){if(t.dataset.a!=='delDoc')state.delArm=null;if(t.dataset.a!=='deleteJob')state.delJob=null;if(t.dataset.a!=='delAccount')state.delConfirm=false;if(t.dataset.a!=='blockUser')state.blockArm=null;f(t.dataset.v,t)}});
+document.addEventListener('change',e=>{
+ const t=e.target;
+ if(t.id==='nd-exp'){state.newDoc.expiry=parseVN(t.value)||'';return}
+ if(t.id==='nd-num'){state.newDoc.number=t.value.trim();return}
+ if(t.id==='nd-iss'){state.newDoc.issue=parseVN(t.value)||'';return}
+ if(t.id==='nd-title'){state.newDoc.title=t.value;return}
+ if(t.id==='nd-cap'){state.newDoc.cap=t.value;return}
+ if(t.name==='owner'||t.name==='cur'){
+  const f=t.closest('form');if(!f)return;const ow=f.elements.owner,cu=f.elements.cur;
+  const u=cu.value==='VND'?'triệu đồng':'USD';
+  f.querySelectorAll('[data-sl]').forEach(l=>{l.textContent=l.dataset.sl+' ('+u+'/tháng)'});return;
+ }
+ if((t.id==='nd-cam'||t.id==='nd-gal')&&t.files&&t.files.length){const f0=t.files[0];t.value='';scanFile(f0);return}
+ const s=t.closest('[data-c]');if(s&&C[s.dataset.c])C[s.dataset.c](s.value,s);
+});
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.q){const pos=t.selectionStart;state.filters.q=t.value;state.expanded=null;render();const n=document.getElementById('f-q');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}return}if(t&&t.dataset&&t.dataset.dm){const d=t.value.replace(/\D/g,'').slice(0,8);const o=d.length>4?d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4):d.length>2?d.slice(0,2)+'/'+d.slice(2):d;if(o!==t.value)t.value=o}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&e.target&&e.target.id==='qp-line'){e.preventDefault();A.qpParse()}});
+document.addEventListener('submit',e=>{
+ const f=e.target.closest('form[data-f]');if(!f)return;e.preventDefault();
+ const fd=new FormData(f),kind=f.dataset.f;
+ if(kind==='msg'){
+  const text=String(fd.get('text')||'').trim();if(!text||!state.chat)return;
+  const from=state.role==='sea'?'cand':'co',th=getThread(state.chat.jobId,state.chat.candId,true),now=Date.now(),mineM=th.msgs.filter(m=>m.f===from);
+  if(objText(text)){toast('Tin nhắn có nội dung không phù hợp, không gửi được');return}
+  if(from==='co'&&scamText(text)){toast('Nhà tuyển dụng không được yêu cầu thu phí hoặc đặt cọc trong tin nhắn');return}
+  if(mineM.filter(m=>now-m.ts<60000).length>=5){toast('Bạn gửi quá nhanh, hãy chờ một chút');return}
+  if(mineM.some(m=>m.text===text&&now-m.ts<300000)){toast('Tin này vừa được gửi, đừng gửi lặp lại');return}
+  sendMsg(state.chat.jobId,state.chat.candId,state.role==='sea'?'cand':'co',text);
+  render();window.scrollTo(0,document.body.scrollHeight);const i=$('#msg-in');if(i)i.focus();return;
+ }
+ if(kind==='report'){
+  if(!state.report)return;fbReport({jobId:state.report.jobId,reason:fd.get('reason'),note:String(fd.get('note')||'').trim()});state.report=null;toast('Đã gửi báo cáo, chúng tôi sẽ xem xét trong 24 giờ');render();return;
+ }
+ if(kind==='profile'){
+  const a=Number(fd.get('salMin')),b=Number(fd.get('salMax')),av=parseVN(fd.get('avail'));
+  if(!av){toast('Nhập ngày đúng dạng dd/mm/yyyy');return}
+  if(b<a){toast('Lương đến phải lớn hơn hoặc bằng lương từ');return}
+  Object.assign(state.me,{name:fd.get('name').trim(),rank:fd.get('rank'),ship:fd.get('ship'),years:Number(fd.get('years')),salMin:a,salMax:b,avail:av});
+  const opts=[1500,3000,5000,5500,7000];state.alert.rank=state.me.rank;state.alert.minSalary=opts.filter(o=>o<=a).pop()||opts[0];state.filters.rank=state.me.rank;
+  state.editProfile=false;toast('Đã lưu hồ sơ');render();window.scrollTo(0,0);return;
+ }
+ if(kind==='doc'){
+  const n=state.newDoc,T=CERT[n.key];let exp=T.noExpiry?null:parseVN(fd.get('expiry'));const idx=n.key==='OTHER'?-1:state.docs.findIndex(d=>d.key===n.key);
+  if(!state.pro&&idx<0&&state.docs.length>=3){toast('Gói miễn phí lưu tối đa 3 giấy tờ');return}
+  const cap=n.key==='COC'?fd.get('cap'):null,title=n.key==='OTHER'?String(fd.get('title')||'').trim():null;
+  if(n.key==='COC'&&!cap){toast('Hãy chọn chức danh ghi trên bằng');return}
+  if(n.key==='OTHER'&&!title){toast('Hãy nhập tên giấy tờ');return}
+  const num=String(fd.get('number')||'').trim().slice(0,30),iss=parseVN(fd.get('issue'))||null;
+  if(!T.noExpiry&&!exp&&T.years&&iss){const p=iss.split('-');exp=(+p[0]+T.years)+'-'+p[1]+'-'+p[2]}
+  if(!T.noExpiry&&!exp){toast('Nhập ngày hết hạn đúng dạng dd/mm/yyyy');return}
+  if(String(fd.get('issue')||'').trim()&&!iss){toast('Ngày cấp phải đúng dạng dd/mm/yyyy');return}
+  if(iss&&exp&&iss>=exp){toast('Ngày cấp phải trước ngày hết hạn');return}
+  const rec={id:idx>=0?state.docs[idx].id:'d'+Date.now(),key:n.key,expiry:exp,number:num,issue:iss};
+  if(cap)rec.cap=cap;if(title)rec.title=title;
+  if(idx>=0)state.docs[idx]=rec;else state.docs.push(rec);
+  state.addStep=null;resetNew();toast('Đã lưu giấy tờ');render();window.scrollTo(0,0);return;
+ }
+ if(kind==='company'){
+  Object.assign(CO[0],{name:fd.get('name').trim(),address:fd.get('address').trim(),city:fd.get('city').trim(),contact:fd.get('contact').trim(),person:String(fd.get('person')||'').trim()});
+  fbSaveCompany();toast('Đã lưu thông tin công ty');render();return;
+ }
+ if(kind==='quote'){
+  fbAdd('quotes',{key:fd.get('key'),price:Number(fd.get('price')),updated:isoToday,validUntil:D(3650)});
+  toast('Đã thêm báo giá');return;
+ }
+ if(kind==='job-co'||kind==='job-ad'){
+  const ad=kind==='job-ad',owner=fd.get('owner')==='vn'?'vn':'foreign',cur=fd.get('cur')==='VND'?'VND':'USD',k=cur==='VND'?1e6:1;
+  const smin=Math.round(Number(fd.get('salaryMin'))*k),smax=Math.round(Number(fd.get('salaryMax'))*k),jd=parseVN(fd.get('joinDate'));
+  if(!jd&&!ad){toast('Nhập ngày nhập tàu đúng dạng dd/mm/yyyy');return}
+  if(!fd.get('rank')||(!fd.get('shipType')&&!ad)){toast('Hãy chọn chức danh và loại tàu');return}
+  if(smax<smin){toast('Lương cao nhất phải lớn hơn hoặc bằng lương thấp nhất');return}
+  if(jd&&diffDays(jd,isoToday)<0){toast('Ngày nhập tàu phải từ hôm nay trở đi');return}
+  const rk0=fd.get('rank'),st0=fd.get('shipType')||'Chưa rõ loại tàu';
+  const gv={vessel:fd.get('vessel'),route:fd.get('route'),flag:fd.get('flag'),dwt:fd.get('dwt'),contact:fd.get('contact')},gm=postGuard(gv,ad?'':(state.qp&&state.qp.raw)||'');
+  if(gm){toast(gm);return}
+  if(!ad&&state.jobs.filter(j=>j.companyId===CO[0].id&&j.ts&&Date.now()-j.ts<864e5).length>=10){toast('Mỗi công ty đăng tối đa 10 tin mỗi ngày');return}
+  if(state.jobs.some(j=>j.status==='approved'&&dupKey(j)&&dupKey(j)===dupKey({rank:rk0,shipType:st0,joinDate:jd,salaryMin:smin,contact:fd.get('contact').trim()}))){toast('Tin này trùng với một tin đang hiển thị');return}
+  const jobObj={rank:rk0,shipType:st0,vessel:fd.get('vessel').trim(),dwt:fd.get('dwt').trim(),flag:fd.get('flag').trim(),route:fd.get('route').trim(),joinDate:jd||'',months:Number(fd.get('months'))||null,salaryMin:smin,salaryMax:smax,owner:owner,cur:cur,certs:certsFor(rk0,st0),companyId:ad?'cx':CO[0].id,companyName:ad?'':CO[0].name,source:ad?'admin':'company',status:'approved',contact:fd.get('contact').trim()};
+  if(!ad&&!CO[0].name){toast('Hãy điền tên công ty ở mục Thông tin công ty trước khi đăng');return}
+  if(ad){const it=state.inbox.find(x=>x.id===state.editInbox);if(it){it.status='done';jobObj.srcNote='Nguồn: '+it.source;state.editInbox=null}toast('Đã đăng tin')}else if(state.qpQueue&&state.qpQueue.length){const nx=state.qpQueue.shift();state.qp=Object.assign(nx,{total:state.qpQueue.length+1});toast('Đã đăng. Còn '+state.qpQueue.length+' chức danh nữa, kiểm tra rồi đăng tiếp')}else{state.qp=null;state.coTab='mine';toast('Đã đăng tin, thuyền viên thấy ngay')}
+  fbAddJob(jobObj);
+  render();window.scrollTo(0,0);
+ }
+});
+window.__back=function(){if(state.legal){A.closeLegal();return true}if(state.report){A.reportClose();return true}if(state.chat){A.backChat();return true}if(state.coJob){A.backApps();return true}if(state.addStep){A.cancelAdd();return true}if(state.bulk){A.bulkOff();return true}if(state.role==='sea'&&state.tab!=='me'){A.tab('me');return true}return false};
+const SAVE_KEY='haitrinh.v1';
+function saveState(){try{syncPush()}catch(e){}try{localStorage.setItem(SAVE_KEY,JSON.stringify({docs:state.docs,me:state.me,alert:state.alert,share:state.share,legalOK:state.legalOK,blocked:state.blocked,role:state.role==='sea'||state.role==='co'?state.role:null}))}catch(e){}}
+function loadState(){try{const o=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(o&&Array.isArray(o.docs)){state.docs=o.docs.filter(d=>CERT[d.key]).map(d=>CERT[d.key].noExpiry?Object.assign({},d,{expiry:null}):d);if(o.me)state.me=o.me;if(o.alert)state.alert=o.alert;state.share=!!o.share;state.legalOK=!!o.legalOK;state.blocked=o.blocked||[];if(o.role&&state.legalOK){state.role=o.role;state.tab='jobs'}}}catch(e){}}
+loadState();
+render();
+fbInit();
+</script>
