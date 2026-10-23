@@ -27,7 +27,9 @@ workflows:
       - name: Dong goi va ky bang Apple Cloud Signing
         script: |
           set -o pipefail
-          printf '%s' "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/asc.p8
+          K=$(printf '%s' "$APP_STORE_CONNECT_PRIVATE_KEY" | sed 's/\\n/\n/g')
+          echo "KEY len=${#K} head=$(printf '%s' "$K" | head -c 10) keyid=$APP_STORE_CONNECT_KEY_IDENTIFIER issuer_len=${#APP_STORE_CONNECT_ISSUER_ID}"
+          if printf '%s' "$K" | grep -q "BEGIN"; then printf '%s\n' "$K" > /tmp/asc.p8; else { echo "-----BEGIN PRIVATE KEY-----"; printf '%s' "$K" | tr -d ' \n' | fold -w 64; echo; echo "-----END PRIVATE KEY-----"; } > /tmp/asc.p8; fi
           mkdir -p build/ios/ipa
           cat > /tmp/export.plist <<EOT
           <?xml version="1.0" encoding="UTF-8"?>
