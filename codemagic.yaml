@@ -4,7 +4,7 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 40
     integrations:
-      app_store_connect: codemagic
+      app_store_connect: codemagic-admin
     environment:
       vars:
         APP_STORE_APPLE_ID: "6826008527"
@@ -32,7 +32,7 @@ workflows:
             @file:*) cp "${K#@file:}" /tmp/asc.p8 ;;
             *) printf '%s\n' "$K" > /tmp/asc.p8 ;;
           esac
-          echo "KEY file lines: $(wc -l < /tmp/asc.p8) first: $(head -1 /tmp/asc.p8)"
+          echo "KEY file lines: $(wc -l < /tmp/asc.p8) keyid: $APP_STORE_CONNECT_KEY_IDENTIFIER"
           mkdir -p build/ios/ipa
           cat > /tmp/export.plist <<EOT
           <?xml version="1.0" encoding="UTF-8"?>
