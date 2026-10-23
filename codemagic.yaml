@@ -16,6 +16,12 @@ workflows:
           mkdir -p CrewJob/Resources
           mv App.swift Bridge.swift WebContainer.swift Info.plist GoogleService-Info.plist CrewJob.entitlements CrewJob/
           mv index.html CrewJob/Resources/
+          mkdir -p CrewJob/Assets.xcassets/AppIcon.appiconset
+          echo 'iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAASFBMVEX////+///+/v78/f38/P37/P3w8vbK1d+nsb54la3+gFSBdoAwW4EUQ20OQm0OQW0MQGwMP2sLP2sKP2sHPGkBN2UANGIAMWBypx/FAAAEiElEQVR42u2a65ajKhCFCYrKNEKpgO//pqcAL6S9TkK6Z61D/eiF7o58bKAQEtL/cpAMkAEyQAbIABkgA2SADJABMkAGyAAZIANkgAyQAd5+QrfELwHoOYbfAejaJYZfAOh0+2eOL60yQAbIABkgA2SA/xEAKPChhhhAhnvd5wFAmzkiADvd0t2nAUCLNVaA+U6rPw0gbUOWYHM85jvCqM8DUEZDrCSEPsKtdAAyCjR+vUAHGDkIms6BwUYxgBnnMvwMwNDyKFot1vL4EwCg26gS5iqNyz8CUBWs8MGKCist2Vr+IQBC54eulcblDJABMsDHAEL2fwIQdgUQV6m4lXtxH0D7rD921frYSmKri215L8Ro92LUNwHQ+ynnV1FwXu+Wd4IfRKvhbhfUk5sFDakYC3gZruLyXtAjb+rbXSCtCItA/PGipLvlvVFQ7nCxQlh5dwyAqc/6+JUoSG3g9iBUVhCaFgDnhlX3p2FyCw4NOABIbsGhAUeZMLEFxwYcASS24NiAw7UgqQUnBhwCJLXgxIDj1TChBWcGHAMktODMgLP3gVQWnBpwApDMglMDzrZmiSw4N+AMIJEF5wac7o6TWHBhwClAEgsuDDg/oEhgwZUB5wAJLLgy4OKM6G0LLg24AHAWMFa+HIxdGXB1SuYseCuuDLgCUEY0b8XlNu3qnBC0fSs0vHtQCVLJl0PJq/r/5d8PALZcwQsioKgA3gMACdpYazTsmAiyN6F/d0QlBycarWT3MgBIPWohOBcCC99qAWXGPohmIyowtkVRiNbaQb4IgNUL3ID7o4CaC6wlFo0VTc0msR0HFYNbnLa1z95Vw3sbdwTI3RFJ9jbHbVP5zbnfiFdNa5ePAoyiYZHIlVnw1GBFPW3rfRLiZmWX2o7m1vkAWIHVs/BNAKVYWyXGwSNg1xjOVrEosRYxgu9tkKZr3N6cPoKIi8jCrrBV2GmmuwZQlrsafOW+HofQqFErBXpssYqSPImMGzt4EZsfTidQewQR2Q2gaEbXKsK3eZFskr9g/inhUUUgQTdxUJmWV2Q6H3GiP6agzgSFokBvXOc8ylVE1kZgLtWicd/tECY2mZFsDfBVF26MuYEYONxVM1+6tqPIpiv8Uzd+XE5ATqTTFQ1iKBXka7M27jjgvoZyI6jt+5bXJFgd3gp8s1yFoh1APPsRRNdfKEonlg9C5tcJj1oSYa4cQAL3xQTl2uq+13ZYRkRRFlOvVxxN7Yd4RJSTWPheH/rBRCOiDJ2C/9Fs58EWQA8cV9Ew7jHnuQeR5VDKjUg/7qHvcE5YbOc057DzaRnGvfKi0ZySYhbdpMBWDXBjGvYuk84zH6asQPHFyPUMNl8vM99nBTKJpZ/5dpn5KrCTAt+omLMCwXu4k4i651UU2yma+czUzYZexXnRLCKrubLRCuVM+Konsaq/ELx7aTnGB2F+x35pOM43Lb8tfdbiuoAax/n2LfsrcLMziMaCevl9wPX2aO2Iw2ubz5WaxX5HhCDiyqneeiGB8FoE3T5fEPu/Fvv8k84MkAEyQAbo+/8AvralJaB3zKkAAAAASUVORK5CYII=' | base64 -D > /tmp/icon128.png
+          sips -s format png -z 1024 1024 /tmp/icon128.png --out CrewJob/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+          printf '{"images":[{"filename":"AppIcon.png","idiom":"universal","platform":"ios","size":"1024x1024"}],"info":{"author":"xcode","version":1}}' > CrewJob/Assets.xcassets/AppIcon.appiconset/Contents.json
+          printf '{"info":{"author":"xcode","version":1}}' > CrewJob/Assets.xcassets/Contents.json
+          printf '        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon\n' >> project.yml
           brew install xcodegen
           xcodegen generate
       - name: Tang so build
@@ -32,7 +38,7 @@ workflows:
             @file:*) cp "${K#@file:}" /tmp/asc.p8 ;;
             *) printf '%s\n' "$K" > /tmp/asc.p8 ;;
           esac
-          echo "KEY file lines: $(wc -l < /tmp/asc.p8) keyid: $APP_STORE_CONNECT_KEY_IDENTIFIER"
+          echo "KEY file lines: $(wc -l < /tmp/asc.p8) first: $(head -1 /tmp/asc.p8)"
           mkdir -p build/ios/ipa
           cat > /tmp/export.plist <<EOT
           <?xml version="1.0" encoding="UTF-8"?>
