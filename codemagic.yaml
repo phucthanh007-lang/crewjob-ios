@@ -6,11 +6,9 @@ workflows:
     integrations:
       app_store_connect: codemagic
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.crewjob.app
       vars:
         APP_STORE_APPLE_ID: "6826008527"
+        BUNDLE_ID: "com.crewjob.app"
       xcode: latest
     scripts:
       - name: Sap xep thu muc, cai XcodeGen va tao du an
@@ -26,9 +24,15 @@ workflows:
           NEXT=$((BUILD + 1))
           sed -i '' "s/CURRENT_PROJECT_VERSION: \"[0-9]*\"/CURRENT_PROJECT_VERSION: \"$NEXT\"/" project.yml
           xcodegen generate
+      - name: Tao chung chi va ho so ky
+        script: |
+          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/cert_key -q -N ""
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --platform IOS --create --certificate-key @file:/tmp/cert_key
+          keychain add-certificates
+          xcode-project use-profiles
       - name: Dong goi
         script: |
-          xcode-project use-profiles
           xcode-project build-ipa --project CrewJob.xcodeproj --scheme CrewJob
     artifacts:
       - build/ios/ipa/*.ipa
