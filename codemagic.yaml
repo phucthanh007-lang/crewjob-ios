@@ -51,7 +51,12 @@ workflows:
           </dict></plist>
           EOT
           xcodebuild -project CrewJob.xcodeproj -scheme CrewJob -configuration Release -destination 'generic/platform=iOS' -archivePath build/CrewJob.xcarchive archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= > /tmp/archive.log 2>&1 || { echo "ARCHIVE FAILED"; grep -E "error:" /tmp/archive.log | sort -u | head -30; tail -15 /tmp/archive.log; exit 1; }
+          APP=$(ls -d build/CrewJob.xcarchive/Products/Applications/*.app | head -1)
+          codesign --force --sign - --entitlements CrewJob/CrewJob.entitlements "$APP"
           xcodebuild -exportArchive -archivePath build/CrewJob.xcarchive -exportPath build/ios/ipa -exportOptionsPlist /tmp/export.plist -allowProvisioningUpdates -authenticationKeyPath /tmp/asc.p8 -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" > /tmp/export.log 2>&1 || { echo "EXPORT FAILED"; grep -E "error:" /tmp/export.log | sort -u | head -30; tail -15 /tmp/export.log; exit 1; }
+          rm -rf /tmp/ipax && mkdir /tmp/ipax && unzip -q build/ios/ipa/*.ipa -d /tmp/ipax
+          echo "=== ENTITLEMENTS IN IPA ==="
+          codesign -d --entitlements :- /tmp/ipax/Payload/*.app 2>&1 | head -40
           ls -la build/ios/ipa
     artifacts:
       - build/ios/ipa/*.ipa
