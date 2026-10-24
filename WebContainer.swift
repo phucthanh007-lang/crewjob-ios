@@ -17,15 +17,22 @@ struct WebContainer: UIViewRepresentable {
         web.navigationDelegate = context.coordinator
         web.uiDelegate = context.coordinator
         web.scrollView.bounces = false
+        web.scrollView.contentInsetAdjustmentBehavior = .never
         web.isOpaque = false
         Bridge.shared.web = web
 
         if let url = Bundle.main.url(forResource: "index", withExtension: "html"),
            let html = try? String(contentsOf: url, encoding: .utf8) {
             // baseURL là miền Firebase đã được cấp phép, để Firebase Auth/Firestore chạy đúng nguồn gốc (https)
-            web.loadHTMLString(html, baseURL: URL(string: "https://crewjob-bdb74.firebaseapp.com"))
+            web.loadHTMLString(Self.withViewport(html), baseURL: URL(string: "https://crewjob-bdb74.firebaseapp.com"))
         }
         return web
+    }
+    /// Trang HTML không có thẻ viewport (bản Android tự đặt). Thêm vào để iPhone hiển thị đúng cỡ như Android.
+    static func withViewport(_ html: String) -> String {
+        let tag = "<meta charset=\"utf-8\">"
+        let extra = tag + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover\"><style>html{-webkit-text-size-adjust:100%}body{-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}</style>"
+        return html.replacingOccurrences(of: tag, with: extra)
     }
     func updateUIView(_ uiView: WKWebView, context: Context) {}
     func makeCoordinator() -> Coordinator { Coordinator() }

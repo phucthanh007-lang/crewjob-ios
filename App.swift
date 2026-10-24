@@ -6,7 +6,7 @@ struct CrewJobApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     var body: some Scene {
         WindowGroup {
-            WebContainer().ignoresSafeArea(.keyboard)
+            WebContainer().ignoresSafeArea(.container).ignoresSafeArea(.keyboard)
         }
     }
 }
