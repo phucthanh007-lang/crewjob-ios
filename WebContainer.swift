@@ -31,7 +31,7 @@ struct WebContainer: UIViewRepresentable {
     /// Trang HTML không có thẻ viewport (bản Android tự đặt). Thêm vào để iPhone hiển thị đúng cỡ như Android.
     static func withViewport(_ html: String) -> String {
         let tag = "<meta charset=\"utf-8\">"
-        let extra = tag + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover\"><style>html{-webkit-text-size-adjust:100%}body{padding-top:env(safe-area-inset-top,0px)}body{-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}</style>"
+        let extra = tag + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover\"><style>html{-webkit-text-size-adjust:100%}body{padding-top:env(safe-area-inset-top,0px)}body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#E8EDF0;z-index:2147483647}@media (prefers-color-scheme:dark){body::before{background:#09161E}}body{-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}</style>"
         return html.replacingOccurrences(of: tag, with: extra)
     }
     func updateUIView(_ uiView: WKWebView, context: Context) {}
