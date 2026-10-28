@@ -1421,7 +1421,7 @@ async function fbDeleteMine(){
 }
 function authCard(){
  if(FB.user)return'<div class="row between"><div><b>Đã đăng nhập</b><div class="sub">'+esc(FB.user.email||'')+(state.isAdmin?' · Quản trị':'')+'</div></div><button class="btn ghost sm" data-a="gSignOut">Đăng xuất</button></div>';
- return'<div><b>Đăng nhập</b><p class="sub">Thuyền viên không cần đăng nhập, cứ chọn Bắt đầu bên dưới. Chỉ công ty tuyển dụng mới cần đăng nhập Google để đăng tin.</p></div><button class="btn accent full" data-a="gSignIn">Đăng nhập bằng Google</button>'+((window.CrewAuth&&window.CrewAuth.apple)?'<button class="btn full" style="margin-top:8px;background:#000;color:#fff" data-a="aSignIn">Đăng nhập bằng Apple</button>':'')+(FB.err?'<p class="sub">'+esc(FB.err)+'</p>':'');
+ return'<div><b>Đăng nhập</b><p class="sub">Thuyền viên không cần đăng nhập, cứ chọn Bắt đầu bên dưới. Chỉ công ty tuyển dụng mới cần đăng nhập Google để đăng tin.</p></div>'+((window.CrewAuth&&window.CrewAuth.apple)?'':'<button class="btn accent full" data-a="gSignIn">Đăng nhập bằng Google</button>')+((window.CrewAuth&&window.CrewAuth.apple)?'<button class="btn full" style="margin-top:8px;background:#000;color:#fff" data-a="aSignIn">Đăng nhập bằng Apple</button>':'')+(FB.err?'<p class="sub">'+esc(FB.err)+'</p>':'');
 }
 
 /* ---------- render ---------- */
