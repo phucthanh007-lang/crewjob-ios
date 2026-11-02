@@ -452,6 +452,32 @@ const state={
 };
 const co=id=>CO.find(c=>c.id===id)||{name:'—',city:'',contact:''};
 
+/* ---------- Chế độ demo: dùng thử đầy đủ với dữ liệu mẫu, không đăng nhập, không lưu, không gửi lên máy chủ ---------- */
+const DEMO={on:false,jobs:[]};
+function demoStart(role){
+ DEMO.on=true;
+ const hr=n=>Date.now()-n*36e5;
+ Object.assign(CO[0],{id:'demo-co',name:'Công ty TNHH Hàng hải Demo',address:'12 Lạch Tray, Hải Phòng',city:'Hải Phòng',contact:'0901234567',person:'Nguyễn Văn Demo',status:'approved'});
+ DEMO.jobs=[
+  J('demo1','CO','Bulk carrier','56000','Panama','Đông Nam Á',20,'',6,6000,6500,null,'demo-co',3,{companyName:CO[0].name,contact:'0901234567',ts:hr(3)}),
+  J('demo2','AB','Container','45000','Singapore','Châu Á',35,'',8,900,1000,null,'demo-co',20,{companyName:CO[0].name,contact:'0901234567',ts:hr(20)}),
+  J('demo3','CE','Oil tanker','72000','Marshall Islands','Toàn cầu',50,'',6,7500,8200,null,'demo-co',30,{companyName:CO[0].name,contact:'0901234567',ts:hr(30)})
+ ];
+ [['dc1','Trần Minh Quân','CO',6,90],['dc2','Lê Hoàng Nam','CO',4,75],['dc3','Phạm Quốc Bảo','AB',3,80]].forEach(c=>{if(!CANDS.some(x=>x.id===c[0]))CANDS.push({id:c[0],name:c[1],rank:c[2],years:c[3],pct:c[4]})});
+ state.me={name:'Nguyễn Văn Demo',rank:'CO',ship:'Bulk carrier',years:6,salMin:5500,salMax:7000,avail:D(20)};
+ state.filters.rank='CO';
+ state.docs=[doc('d1','PASSPORT',900,{number:'C1234567'}),doc('d2','SEAMANBOOK',null,{number:'VN-123456'}),doc('d3','COC',700,{number:'COC-0987'}),doc('d4','MEDICAL',40,{number:'MED-2026'}),doc('d5','BST',25,{number:'BST-4455'}),doc('d6','GMDSS',1200,{number:'GOC-7788'})];
+ state.apps=[{jobId:'demo1',candId:'me',seen:false},{jobId:'demo1',candId:'dc1',seen:false},{jobId:'demo1',candId:'dc2',seen:true},{jobId:'demo2',candId:'dc3',seen:false}];
+ state.applied=new Set(['demo1']);
+ state.threads=[
+  {id:'tdemo1',jobId:'demo1',candId:'me',uCo:0,uSea:1,msgs:[{f:'cand',text:'Chào anh, em quan tâm vị trí Đại phó tàu hàng rời. Em có thể nhập tàu sau 20 ngày.',ts:hr(4)},{f:'co',text:'Chào bạn, công ty đã nhận hồ sơ. Bạn gửi giúp mình bản scan COC và sổ thuyền viên nhé.',ts:hr(2)}]},
+  {id:'tdemo2',jobId:'demo1',candId:'dc1',uCo:1,uSea:0,msgs:[{f:'cand',text:'Em chào công ty, em có 6 năm kinh nghiệm Đại phó, mong được trao đổi thêm.',ts:hr(1)}]}
+ ];
+ state.jobs=DEMO.jobs.concat(state.jobs.filter(j=>!/^demo/.test(j.id)));
+ state.role=role;state.tab=role==='sea'?'msgs':'jobs';state.coTab=role==='co'?'mine':'post';state.expanded=null;state.chat=null;state.coJob=null;
+ render();window.scrollTo(0,0);
+}
+
 /* ---------- logic ---------- */
 function docStatus(exp){
  if(!exp)return{k:'ok',d:99999,label:'Không có ngày hết hạn'};
@@ -576,7 +602,7 @@ function welcome(){
  return'<main class="wrap welcome"><div class="brand">'+IC.anchor+'CrewJob</div><p class="tag">Giấy tờ và việc làm cho thuyền viên</p><section class="card stack" style="margin:12px 0">'+authCard()+'</section><h1 class="sec-title" style="font-size:26px">Bạn dùng app với vai trò nào?</h1><div class="choose">'+
   '<button class="choice" data-a="role" data-v="sea"><span class="ic">'+IC.user+'</span><span class="ct">Thuyền viên</span><span class="cd">Quét giấy tờ để lưu số và ngày hết hạn, nhận nhắc hạn, tìm việc theo chức danh và ngày nhập tàu.</span><span class="go">Bắt đầu</span></button>'+
   '<button class="choice" data-a="role" data-v="co"><span class="ic">'+IC.brief+'</span><span class="ct">Công ty tuyển dụng</span><span class="cd">Gõ một dòng, app tự điền tin. Thuyền viên thấy ngay, ứng viên nhắn thẳng cho bạn.</span><span class="go">Đăng tin nhanh</span></button></div>'+
-  '<label class="legalchk"><input type="checkbox" data-c="legalOK"'+(state.legalOK?' checked':'')+'><span>Tôi từ đủ 18 tuổi, đã đọc và đồng ý với <button class="linkb" type="button" data-a="openLegal" data-v="terms">Điều khoản sử dụng</button> và <button class="linkb" type="button" data-a="openLegal" data-v="privacy">Chính sách bảo mật</button>, trong đó app chỉ đọc chữ trên ảnh giấy tờ ngay trên máy tôi và không lưu ảnh.</span></label>'+
+  '<section class="card stack" style="margin:12px 0"><div><b>Chế độ demo</b><p class="sub">Dùng thử đầy đủ tính năng bằng dữ liệu mẫu (giấy tờ, việc làm, tin nhắn), không cần đăng nhập. Dữ liệu demo không được lưu và không gửi lên máy chủ.</p></div><div class="row"><button class="btn accent" type="button" data-a="demo" data-v="sea">Demo Thuyền viên</button><button class="btn ghost" type="button" data-a="demo" data-v="co">Demo Công ty</button></div></section><label class="legalchk"><input type="checkbox" data-c="legalOK"'+(state.legalOK?' checked':'')+'><span>Tôi từ đủ 18 tuổi, đã đọc và đồng ý với <button class="linkb" type="button" data-a="openLegal" data-v="terms">Điều khoản sử dụng</button> và <button class="linkb" type="button" data-a="openLegal" data-v="privacy">Chính sách bảo mật</button>, trong đó app chỉ đọc chữ trên ảnh giấy tờ ngay trên máy tôi và không lưu ảnh.</span></label>'+
   (state.isAdmin?'<button class="btn ghost full" data-a="role" data-v="ad">Vào trang Quản trị</button>':'')+'</main>';
 }
 function navBar(){
@@ -1350,6 +1376,7 @@ function fbListenPublic(){
  const onErr=e=>{if(!FB.errShown){FB.errShown=true;fbToast('Không tải được dữ liệu từ máy chủ')}};
  FB.db.collection('jobs').where('status','==','approved').onSnapshot(snap=>{
   state.jobs=snap.docs.map(d=>{const x=d.data({serverTimestamps:'estimate'}),ts=fbTs(x.ts);return Object.assign({},x,{id:d.id,ts:ts,postedHrs:Math.max(0,Math.floor((Date.now()-ts)/36e5))})}).filter(j=>state.isAdmin||!j.ts||Date.now()-j.ts<10*864e5).sort((a,b)=>b.ts-a.ts);
+  if(DEMO.on)state.jobs=DEMO.jobs.concat(state.jobs);
   state.jobs.forEach(j=>{if(j.companyId&&j.companyId!=='cx'&&j.companyId!==CO[0].id&&!CO.some(c=>c.id===j.companyId))CO.push({id:j.companyId,name:j.companyName||'Nhà tuyển dụng',city:'',contact:j.contact||'',status:'approved'})});
   render();
  },onErr);
@@ -1372,8 +1399,8 @@ async function fbOnUser(u){
   try{const d=await FB.db.collection('users').doc(u.uid).get();if(d.exists){const c=d.data().company||{};Object.assign(CO[0],{name:c.name||'',address:c.address||'',city:c.city||'',contact:c.contact||'',person:c.person||''})}}catch(e){}
   if(state.isAdmin){FB.unsub.push(FB.db.collection('reports').onSnapshot(snap=>{const st=snap.docs.find(d=>d.id==='_stats');state.stats=st?st.data():null;state.reports=snap.docs.filter(d=>d.id!=='_stats').map(d=>{const x=d.data();return Object.assign({},x,{id:d.id,ts:fbTs(x.ts)})});render()},()=>{}))}
  }else{
-  CO[0].id='me';Object.assign(CO[0],{name:'',address:'',city:'',contact:'',person:''});
-  if(state.role==='co'||state.role==='ad')state.role=null;
+  if(!DEMO.on){CO[0].id='me';Object.assign(CO[0],{name:'',address:'',city:'',contact:'',person:''})}
+  if(!DEMO.on&&(state.role==='co'||state.role==='ad'))state.role=null;
  }
  render();
 }
@@ -1392,27 +1419,30 @@ window.__gsCb=function(r){
  else fbToast('Không đăng nhập được'+(r&&r.err?': '+r.err:''));
 };
 function fbSignOut(){if(!FB.auth)return;FB.auth.signOut().then(()=>{state.role=null;state.isAdmin=false;render()})}
-function needLogin(){if(!FB.ready||!FB.user){fbToast('Hãy đăng nhập bằng Google trước');return true}return false}
+function needLogin(){if(DEMO.on)return false;if(!FB.ready||!FB.user){fbToast('Hãy đăng nhập bằng Google trước');return true}return false}
 function fbAddJob(o){
+ if(DEMO.on){const t=Date.now();DEMO.jobs.unshift(Object.assign({},o,{id:'demo'+t,ts:t,postedHrs:0}));state.jobs=DEMO.jobs.concat(state.jobs.filter(j=>!/^demo/.test(j.id)));return}
  if(needLogin())return;
  const d=Object.assign({},o,{uid:FB.user.uid,ts:firebase.firestore.FieldValue.serverTimestamp()});
  if(d.source!=='admin')d.companyId=FB.user.uid;
  Object.keys(d).forEach(k=>{if(d[k]===undefined||d[k]===null&&k!=='months')delete d[k]});
  FB.db.collection('jobs').add(d).catch(e=>fbToast('Không đăng được tin: '+(e.code||e.message)));
 }
-function fbAdd(col,o){if(needLogin())return;FB.db.collection(col).add(o).catch(e=>fbToast('Lỗi lưu: '+(e.code||e.message)))}
-function fbUpd(col,id,o){if(needLogin())return;FB.db.collection(col).doc(id).update(o).catch(e=>fbToast('Lỗi cập nhật: '+(e.code||e.message)))}
-function fbDel(col,id){if(needLogin())return;FB.db.collection(col).doc(id).delete().catch(e=>fbToast('Lỗi xóa: '+(e.code||e.message)))}
+function fbAdd(col,o){if(DEMO.on)return;if(needLogin())return;FB.db.collection(col).add(o).catch(e=>fbToast('Lỗi lưu: '+(e.code||e.message)))}
+function fbUpd(col,id,o){if(DEMO.on)return;if(needLogin())return;FB.db.collection(col).doc(id).update(o).catch(e=>fbToast('Lỗi cập nhật: '+(e.code||e.message)))}
+function fbDel(col,id){if(DEMO.on)return;if(needLogin())return;FB.db.collection(col).doc(id).delete().catch(e=>fbToast('Lỗi xóa: '+(e.code||e.message)))}
 function fbReport(o){
+ if(DEMO.on){fbToast('Chế độ demo: báo cáo không được gửi đi');return}
  if(!FB.ready){fbToast('Chưa kết nối máy chủ, thử lại sau');return}
  FB.db.collection('reports').add({jobId:String(o.jobId).slice(0,60),reason:String(o.reason||'').slice(0,40),note:String(o.note||'').slice(0,500),status:'open',ts:firebase.firestore.FieldValue.serverTimestamp(),uid:FB.user?FB.user.uid:''}).then(()=>fbToast('Đã gửi báo cáo, chúng tôi sẽ xem xét trong 24 giờ')).catch(e=>fbToast('Không gửi được báo cáo: '+(e.code||e.message)));
 }
 function fbSaveCompany(){
+ if(DEMO.on)return;
  if(needLogin())return;const c=CO[0];
  FB.db.collection('users').doc(FB.user.uid).set({company:{name:c.name,address:c.address,city:c.city,contact:c.contact,person:c.person||''}},{merge:true}).catch(e=>fbToast('Lỗi lưu: '+(e.code||e.message)));
 }
 async function fbDeleteMine(){
- if(!FB.ready||!FB.user)return;
+ if(DEMO.on||!FB.ready||!FB.user)return;
  try{
   const uid=FB.user.uid,q=await FB.db.collection('jobs').where('uid','==',uid).get(),b=FB.db.batch();
   q.docs.forEach(d=>b.delete(d.ref));b.delete(FB.db.collection('users').doc(uid));await b.commit();
@@ -1461,6 +1491,7 @@ const A={
   if(state.blockArm===key){if(state.blocked.indexOf(key)<0)state.blocked.push(key);state.blockArm=null;state.chat=null;toast('Đã chặn. Bạn có thể bỏ chặn trong Hồ sơ');render();window.scrollTo(0,0)}else{state.blockArm=key;render()}},
  unblock:v=>{state.blocked=state.blocked.filter(x=>x!==v);render()},
  delAccount:()=>{
+  if(DEMO.on){location.reload();return}
   if(!state.delConfirm){state.delConfirm=true;render();return}
   if(state.role==='sea'){state.docs=[];state.apps=state.apps.filter(a=>a.candId!=='me');state.threads=state.threads.filter(t=>t.candId!=='me');state.applied=new Set();state.me={name:'Thuyền viên mới',rank:'AB',ship:'Bulk carrier',years:0,salMin:0,salMax:0,avail:D(30)};state.alert={on:false,rank:'AB',minSalary:1500,within:90};state.editProfile=false}
   else if(state.role==='co'){const ids=state.jobs.filter(j=>j.companyId===CO[0].id).map(j=>j.id);state.jobs=state.jobs.filter(j=>ids.indexOf(j.id)<0);state.apps=state.apps.filter(a=>ids.indexOf(a.jobId)<0);state.threads=state.threads.filter(t=>ids.indexOf(t.jobId)<0);state.coJob=null;state.qp=null}
@@ -1503,7 +1534,8 @@ const A={
  copy:v=>{try{navigator.clipboard.writeText(v).then(()=>toast('Đã sao chép')).catch(()=>toast('Hãy chọn số và sao chép thủ công'))}catch(e){toast('Hãy chọn số và sao chép thủ công')}},
  editProfile:()=>{state.editProfile=true;render()},
  cancelProfile:()=>{state.editProfile=false;render()},
- switchAcct:()=>{state.role=null;state.expanded=null;state.chat=null;state.coJob=null;render();window.scrollTo(0,0)},
+ demo:v=>{demoStart(v==='co'?'co':'sea')},
+ switchAcct:()=>{if(DEMO.on){location.reload();return}state.role=null;state.expanded=null;state.chat=null;state.coJob=null;render();window.scrollTo(0,0)},
  repost:v=>{const j=state.jobs.find(x=>x.id===v);state.qp={raw:'',v:Object.assign({},j,{joinDate:''}),miss:['ngày nhập tàu'],repost:true};state.coTab='post';state.coJob=null;render();window.scrollTo(0,0);toast('Đã điền sẵn tin cũ, hãy chọn ngày nhập tàu mới')},
  togglePro:()=>{if(LAUNCH_FREE)return;state.pro=!state.pro;state.expanded=null;render()},
  addDoc:()=>{state.addStep='pick';resetNew();state.tab='docs';render();window.scrollTo(0,0)},
@@ -1638,7 +1670,7 @@ document.addEventListener('submit',e=>{
 });
 window.__back=function(){if(state.legal){A.closeLegal();return true}if(state.report){A.reportClose();return true}if(state.chat){A.backChat();return true}if(state.coJob){A.backApps();return true}if(state.addStep){A.cancelAdd();return true}if(state.bulk){A.bulkOff();return true}if(state.role==='sea'&&state.tab!=='me'){A.tab('me');return true}return false};
 const SAVE_KEY='haitrinh.v1';
-function saveState(){try{syncPush()}catch(e){}try{localStorage.setItem(SAVE_KEY,JSON.stringify({docs:state.docs,me:state.me,alert:state.alert,share:state.share,legalOK:state.legalOK,blocked:state.blocked,role:state.role==='sea'||state.role==='co'?state.role:null}))}catch(e){}}
+function saveState(){if(DEMO.on)return;try{syncPush()}catch(e){}try{localStorage.setItem(SAVE_KEY,JSON.stringify({docs:state.docs,me:state.me,alert:state.alert,share:state.share,legalOK:state.legalOK,blocked:state.blocked,role:state.role==='sea'||state.role==='co'?state.role:null}))}catch(e){}}
 function loadState(){try{const o=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(o&&Array.isArray(o.docs)){state.docs=o.docs.filter(d=>CERT[d.key]).map(d=>CERT[d.key].noExpiry?Object.assign({},d,{expiry:null}):d);if(o.me)state.me=o.me;if(o.alert)state.alert=o.alert;state.share=!!o.share;state.legalOK=!!o.legalOK;state.blocked=o.blocked||[];if(o.role&&state.legalOK){state.role=o.role;state.tab='jobs'}}}catch(e){}}
 loadState();
 render();
