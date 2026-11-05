@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>756648034190-e8o980v0bs35edo6tnnjgdjr7qotn4jt.apps.googleusercontent.com</string>
+	<string>756648034190-on3rl10s1se2ip0hd2t0j3cbhs2t18bo.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.756648034190-e8o980v0bs35edo6tnnjgdjr7qotn4jt</string>
+	<string>com.googleusercontent.apps.756648034190-on3rl10s1se2ip0hd2t0j3cbhs2t18bo</string>
 	<key>ANDROID_CLIENT_ID</key>
 	<string>756648034190-7bqv1cgqlen0cgtvfmlrchsn5hmoghov.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.crewjob.app</string>
+	<string>com.crewjob.seafarer</string>
 	<key>PROJECT_ID</key>
 	<string>crewjob-bdb74</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:756648034190:ios:bd10ea2e02f85a2d092edf</string>
+	<string>1:756648034190:ios:00f9d54f109f728b092edf</string>
 </dict>
 </plist>

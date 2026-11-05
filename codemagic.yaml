@@ -4,11 +4,11 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 40
     integrations:
-      app_store_connect: codemagic-admin
+      app_store_connect: techplus-crewjob
     environment:
       vars:
-        APP_STORE_APPLE_ID: "6826008527"
-        BUNDLE_ID: "com.crewjob.app"
+        APP_STORE_APPLE_ID: "6830962506"
+        BUNDLE_ID: "com.crewjob.seafarer"
       xcode: latest
     scripts:
       - name: Sap xep thu muc, cai XcodeGen va tao du an
@@ -45,7 +45,7 @@ workflows:
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0"><dict>
           <key>method</key><string>app-store-connect</string>
-          <key>teamID</key><string>3KX5TXN6SX</string>
+          <key>teamID</key><string>JTX3K26QVJ</string>
           <key>signingStyle</key><string>automatic</string>
           <key>destination</key><string>export</string>
           </dict></plist>
